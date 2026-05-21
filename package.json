@@ -7,7 +7,12 @@
     "dev": "turbo dev",
     "lint": "turbo lint",
     "format": "turbo format",
-    "typecheck": "turbo typecheck"
+    "typecheck": "turbo typecheck",
+    "db:generate": "pnpm --filter @iris/database generate",
+    "db:migrate": "pnpm --filter @iris/database migrate",
+    "db:studio": "pnpm --filter @iris/database studio",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down"
   },
   "devDependencies": {
     "@workspace/eslint-config": "workspace:*",

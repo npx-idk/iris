@@ -27,6 +27,9 @@ out/
 build
 dist
 
+# Local artifact uploads (now stored in MinIO)
+uploads/
+
 # Prisma generated client
 packages/database/generated
 
@@ -37,3 +40,10 @@ npm-debug.log*
 # Misc
 .DS_Store
 *.pem
+
+#phases
+
+# Compiled artifacts accidentally emitted into src/ directories
+packages/*/src/**/*.js
+packages/*/src/**/*.d.ts
+packages/*/src/**/*.d.ts.map

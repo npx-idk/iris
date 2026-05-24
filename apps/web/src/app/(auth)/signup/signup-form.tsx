@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { signUp } from '@/lib/auth-client';
+import { ROUTES } from '@/lib/routes';
 import { Button } from '@workspace/ui/components/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@workspace/ui/components/card';
 import { Input } from '@workspace/ui/components/input';
@@ -30,7 +31,7 @@ export function SignupForm() {
       return;
     }
 
-    router.push('/dashboard');
+    router.push(ROUTES.dashboard);
   }
 
   return (
@@ -94,7 +95,7 @@ export function SignupForm() {
       <CardFooter className="justify-center">
         <p className="text-xs text-muted-foreground">
           Already have an account?{' '}
-          <Link href="/login" className="text-primary hover:underline font-medium">
+          <Link href={ROUTES.login} className="text-primary hover:underline font-medium">
             Sign in
           </Link>
         </p>

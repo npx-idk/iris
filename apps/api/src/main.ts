@@ -1,5 +1,8 @@
 import 'reflect-metadata';
+import * as dotenv from 'dotenv';
+dotenv.config();
 import { NestFactory } from '@nestjs/core';
+import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import express from 'express';
 
@@ -19,12 +22,30 @@ async function bootstrap() {
     express.urlencoded({ extended: true })(req, res, next);
   });
 
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
+
   app.enableCors({
-    origin: process.env.WEB_URL ?? 'http://localhost:3000',
+    origin: process.env.WEB_URL ?? 'http://localhost:3001',
     credentials: true,
   });
 
-  const port = process.env.PORT ?? 3001;
+  app.enableShutdownHooks()
+
+  // Force-exit after 3 s if graceful shutdown stalls (e.g. an open Chromium session
+  // prevents the Bull queue from draining cleanly).
+  const forceExit = (signal: string) => {
+    setTimeout(() => process.exit(0), 3000).unref()
+  }
+  process.on('SIGTERM', forceExit)
+  process.on('SIGINT', forceExit)
+
+  const port = process.env.PORT ?? 3000;
   await app.listen(port);
   console.log(`🚀 API running on http://localhost:${port}`);
 }

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionCookie } from 'better-auth/cookies';
+import { ROUTES } from '@/lib/routes';
 
-const PUBLIC_PATHS = ['/login', '/signup', '/api'];
+const PUBLIC_PATHS = [ROUTES.login, ROUTES.signup, '/api'];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -13,7 +14,7 @@ export function middleware(request: NextRequest) {
   const session = getSessionCookie(request);
 
   if (!session) {
-    const loginUrl = new URL('/login', request.url);
+    const loginUrl = new URL(ROUTES.login, request.url);
     loginUrl.searchParams.set('callbackURL', pathname);
     return NextResponse.redirect(loginUrl);
   }

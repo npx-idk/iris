@@ -1,8 +1,10 @@
 'use client';
 
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { api } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
 import { Button } from '@workspace/ui/components/button';
@@ -13,26 +15,26 @@ import { Card, CardContent } from '@workspace/ui/components/card';
 import { Separator } from '@workspace/ui/components/separator';
 import { SidebarTrigger } from '@workspace/ui/components/sidebar';
 
+const schema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  baseUrl: z.string().min(1, 'Base URL is required').url('Enter a valid URL (e.g. https://myapp.com)'),
+  description: z.string().optional(),
+})
+type FormValues = z.infer<typeof schema>
+
 export default function NewProjectPage() {
   const router = useRouter();
-  const [form, setForm] = useState({ name: '', baseUrl: '', description: '' });
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const { register, handleSubmit, setError, formState: { errors, isSubmitting } } = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    mode: 'onBlur',
+  });
 
-  function set(field: keyof typeof form, value: string) {
-    setForm((f) => ({ ...f, [field]: value }));
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
+  async function onSubmit(values: FormValues) {
     try {
-      const project = await api.post<{ id: string }>('/projects', form);
+      const project = await api.post<{ id: string }>('/projects', values);
       router.push(ROUTES.project(project.id));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create project');
-      setLoading(false);
+      setError('root', { message: err instanceof Error ? err.message : 'Failed to create project' });
     }
   }
 
@@ -55,36 +57,22 @@ export default function NewProjectPage() {
 
         <Card>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-5 pt-2">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 pt-2">
               <div className="space-y-1">
                 <Label htmlFor="name">
                   Project name <span className="text-destructive">*</span>
                 </Label>
-                <Input
-                  id="name"
-                  type="text"
-                  value={form.name}
-                  onChange={(e) => set('name', e.target.value)}
-                  required
-                  placeholder="My E-commerce App"
-                />
+                <Input id="name" placeholder="My E-commerce App" {...register('name')} />
+                {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
               </div>
 
               <div className="space-y-1">
                 <Label htmlFor="baseUrl">
                   Base URL <span className="text-destructive">*</span>
                 </Label>
-                <Input
-                  id="baseUrl"
-                  type="url"
-                  value={form.baseUrl}
-                  onChange={(e) => set('baseUrl', e.target.value)}
-                  required
-                  placeholder="https://myapp.com"
-                />
-                <p className="text-xs text-muted-foreground">
-                  The root URL of the app being tested
-                </p>
+                <Input id="baseUrl" placeholder="https://myapp.com" {...register('baseUrl')} />
+                {errors.baseUrl && <p className="text-xs text-destructive">{errors.baseUrl.message}</p>}
+                <p className="text-xs text-muted-foreground">The root URL of the app being tested</p>
               </div>
 
               <div className="space-y-1">
@@ -92,17 +80,12 @@ export default function NewProjectPage() {
                   Description{' '}
                   <span className="text-muted-foreground font-normal">(optional)</span>
                 </Label>
-                <Textarea
-                  id="description"
-                  value={form.description}
-                  onChange={(e) => set('description', e.target.value)}
-                  placeholder="What are you testing?"
-                />
+                <Textarea id="description" placeholder="What are you testing?" {...register('description')} />
               </div>
 
-              {error && (
+              {errors.root && (
                 <p className="text-xs text-destructive bg-destructive/10 px-3 py-2 rounded-md">
-                  {error}
+                  {errors.root.message}
                 </p>
               )}
 
@@ -110,8 +93,8 @@ export default function NewProjectPage() {
                 <Button variant="ghost" asChild>
                   <Link href={ROUTES.dashboard}>Cancel</Link>
                 </Button>
-                <Button type="submit" disabled={loading}>
-                  {loading ? 'Creating...' : 'Create project'}
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? 'Creating...' : 'Create project'}
                 </Button>
               </div>
             </form>

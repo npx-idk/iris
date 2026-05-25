@@ -11,6 +11,8 @@ import { SessionModule } from './sessions/session.module'
 import { AuthoringModule } from './author/author.module'
 import { CiModule } from './ci/ci.module'
 import { WorkspaceModule } from './workspace/workspace.module'
+import { ExploreModule } from './explore/explore.module'
+import { GroupsModule } from './groups/groups.module'
 
 @Module({
   imports: [
@@ -28,6 +30,8 @@ import { WorkspaceModule } from './workspace/workspace.module'
     AuthoringModule,
     CiModule,
     WorkspaceModule,
+    ExploreModule,
+    GroupsModule,
   ],
 })
 export class AppModule {}

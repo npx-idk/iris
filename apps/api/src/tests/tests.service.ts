@@ -47,6 +47,7 @@ export class TestsService {
         prerequisites: {
           select: { id: true, name: true },
         },
+        group: { select: { id: true, name: true } },
       },
       orderBy: { order: 'asc' },
     })

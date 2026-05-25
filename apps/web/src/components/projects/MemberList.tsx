@@ -1,6 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { api } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
 import type { ProjectMember } from '@/lib/types';
@@ -8,6 +10,12 @@ import { ASSIGNABLE_PROJECT_ROLES, type AssignableProjectRole } from '@iris/comm
 import { Button } from '@workspace/ui/components/button';
 import { Input } from '@workspace/ui/components/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@workspace/ui/components/card';
+
+const schema = z.object({
+  email: z.string().min(1, 'Email is required').email('Enter a valid email address'),
+  role: z.enum(['OWNER', 'ADMIN', 'MEMBER', 'VIEWER'] as const),
+})
+type FormValues = z.infer<typeof schema>
 
 interface Props {
   members: ProjectMember[];
@@ -21,23 +29,19 @@ interface Props {
 export function MemberList({
   members, projectId, canManage, isOwner, currentUserId, onUpdate,
 }: Props) {
-  const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteRole, setInviteRole] = useState<AssignableProjectRole>('MEMBER');
-  const [inviting, setInviting] = useState(false);
-  const [error, setError] = useState('');
+  const { register, handleSubmit, reset, setError, formState: { errors, isSubmitting } } = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    mode: 'onBlur',
+    defaultValues: { email: '', role: 'MEMBER' },
+  });
 
-  async function handleInvite(e: React.FormEvent) {
-    e.preventDefault();
-    setError('');
-    setInviting(true);
+  async function onSubmit(values: FormValues) {
     try {
-      await api.post(`${ROUTES.project(projectId)}/members`, { email: inviteEmail, role: inviteRole });
-      setInviteEmail('');
+      await api.post(`${ROUTES.project(projectId)}/members`, { email: values.email, role: values.role });
+      reset();
       onUpdate();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to invite member');
-    } finally {
-      setInviting(false);
+      setError('root', { message: err instanceof Error ? err.message : 'Failed to invite member' });
     }
   }
 
@@ -59,32 +63,28 @@ export function MemberList({
             <CardTitle>Invite member</CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleInvite}>
+            <form onSubmit={handleSubmit(onSubmit)}>
               <div className="flex gap-2">
                 <Input
                   type="email"
-                  value={inviteEmail}
-                  onChange={(e) => setInviteEmail(e.target.value)}
-                  required
                   placeholder="colleague@company.com"
                   className="flex-1"
+                  {...register('email')}
                 />
                 <select
-                  value={inviteRole}
-                  onChange={(e) => setInviteRole(e.target.value as AssignableProjectRole)}
+                  {...register('role')}
                   className="h-7 rounded-md border border-input bg-card px-2 text-xs text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
                 >
                   {ASSIGNABLE_PROJECT_ROLES.map((r) => (
                     <option key={r} value={r}>{r.toLowerCase()}</option>
                   ))}
                 </select>
-                <Button type="submit" disabled={inviting}>
-                  {inviting ? 'Inviting...' : 'Invite'}
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? 'Inviting...' : 'Invite'}
                 </Button>
               </div>
-              {error && (
-                <p className="text-xs text-destructive mt-2">{error}</p>
-              )}
+              {errors.email && <p className="text-xs text-destructive mt-1">{errors.email.message}</p>}
+              {errors.root && <p className="text-xs text-destructive mt-1">{errors.root.message}</p>}
             </form>
           </CardContent>
         </Card>

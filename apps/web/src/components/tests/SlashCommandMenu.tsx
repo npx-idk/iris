@@ -1,6 +1,9 @@
 'use client'
 
-import { useRef, useState, useCallback, useEffect } from 'react'
+import { useRef, useState, useEffect } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
 import { api } from '@/lib/api'
 import type { WorkspaceVariable } from '@/lib/types'
 import { Textarea } from '@workspace/ui/components/textarea'
@@ -19,6 +22,15 @@ interface MenuState {
   query: string
   slashIndex: number
 }
+
+// ─── Create variable schema ─────────────────────────────────────────────────────
+
+const createSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  value: z.string().min(1, 'Value is required'),
+  isSecret: z.boolean(),
+})
+type CreateValues = z.infer<typeof createSchema>
 
 // ─── Static command list ────────────────────────────────────────────────────────
 
@@ -48,13 +60,17 @@ export function SlashCommandMenu({
   const [menu, setMenu] = useState<MenuState | null>(null)
   const [activeIndex, setActiveIndex] = useState(0)
   const [createOpen, setCreateOpen] = useState(false)
-  const [createName, setCreateName] = useState('')
-  const [createValue, setCreateValue] = useState('')
-  const [createSecret, setCreateSecret] = useState(false)
-  const [creating, setCreating] = useState(false)
   const [pendingInsert, setPendingInsert] = useState<string | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
+
+  const { register, handleSubmit, reset, watch, setError, formState: { errors, isSubmitting } } = useForm<CreateValues>({
+    resolver: zodResolver(createSchema),
+    mode: 'onBlur',
+    defaultValues: { name: '', value: '', isSecret: false },
+  })
+
+  const isSecret = watch('isSecret')
 
   // Filtered lists
   const filteredCommands = COMMANDS.filter((c) =>
@@ -120,7 +136,6 @@ export function SlashCommandMenu({
     } else {
       const variable = filteredVariables[index]
       if (!variable) {
-        // "Create" was selected
         openCreate()
       } else {
         insertVariable(variable.name)
@@ -130,27 +145,22 @@ export function SlashCommandMenu({
 
   function openCreate() {
     if (!menu) return
-    setCreateName(menu.query)
-    setCreateValue('')
-    setCreateSecret(false)
+    reset({ name: menu.query.trim(), value: '', isSecret: false })
     setCreateOpen(true)
   }
 
-  async function handleCreate(e: React.FormEvent) {
-    e.preventDefault()
-    if (!createName.trim() || !createValue.trim()) return
-    setCreating(true)
+  async function onCreateSubmit(values: CreateValues) {
     try {
       await api.post('/workspace/variables', {
-        name: createName.trim(),
-        value: createValue.trim(),
-        isSecret: createSecret,
+        name: values.name.trim(),
+        value: values.value.trim(),
+        isSecret: values.isSecret,
       })
-      setPendingInsert(createName.trim())
+      setPendingInsert(values.name.trim())
       setCreateOpen(false)
       onVariableCreated()
-    } finally {
-      setCreating(false)
+    } catch (err) {
+      setError('root', { message: err instanceof Error ? err.message : 'Failed to create variable' })
     }
   }
 
@@ -160,21 +170,17 @@ export function SlashCommandMenu({
     onChange(newValue)
 
     if (menu) {
-      // If cursor moved before the slash, close menu
       if (cursor <= menu.slashIndex) {
         closeMenu()
         return
       }
-      // Update query from text after the slash up to cursor
       const query = newValue.slice(menu.slashIndex + 1, cursor)
-      // If query contains a space, close the menu (invalid in variable names)
       if (query.includes(' ') || query.includes('\n')) {
         closeMenu()
         return
       }
       setMenu((prev) => prev ? { ...prev, query } : null)
     } else {
-      // Detect a freshly typed "/"
       const charBefore = newValue[cursor - 1]
       const charBeforeSlash = cursor >= 2 ? newValue[cursor - 2] : null
       if (charBefore === '/' && (charBeforeSlash === null || charBeforeSlash === ' ' || charBeforeSlash === '\n')) {
@@ -209,7 +215,6 @@ export function SlashCommandMenu({
       if (e.key === 'Escape') {
         e.preventDefault()
         if (menu.phase === 'variables') {
-          // Go back to commands level
           setMenu({ ...menu, phase: 'commands', query: '' })
         } else {
           closeMenu()
@@ -339,42 +344,36 @@ export function SlashCommandMenu({
               Add a new workspace variable. Use <code className="text-xs bg-muted px-1 rounded">{'{{name}}'}</code> to reference it in any step.
             </SheetDescription>
           </SheetHeader>
-          <form onSubmit={handleCreate} className="mt-6 space-y-4 px-1">
+          <form onSubmit={handleSubmit(onCreateSubmit)} className="mt-6 space-y-4 px-1">
             <div className="space-y-1">
               <Label htmlFor="create-var-name" className="text-xs">Name</Label>
               <Input
                 id="create-var-name"
-                value={createName}
-                onChange={(e) => setCreateName(e.target.value)}
-                required
+                {...register('name')}
                 placeholder="email"
                 className="font-mono text-xs"
               />
+              {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
             </div>
             <div className="space-y-1">
               <Label htmlFor="create-var-value" className="text-xs">Value</Label>
               <Input
                 id="create-var-value"
-                type={createSecret ? 'password' : 'text'}
-                value={createValue}
-                onChange={(e) => setCreateValue(e.target.value)}
-                required
-                placeholder={createSecret ? '••••••••' : 'test@example.com'}
+                {...register('value')}
+                type={isSecret ? 'password' : 'text'}
+                placeholder={isSecret ? '••••••••' : 'test@example.com'}
                 className="text-xs"
               />
+              {errors.value && <p className="text-xs text-destructive">{errors.value.message}</p>}
             </div>
             <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={createSecret}
-                onChange={(e) => setCreateSecret(e.target.checked)}
-                className="accent-primary"
-              />
+              <input type="checkbox" {...register('isSecret')} className="accent-primary" />
               Mark as secret
             </label>
+            {errors.root && <p className="text-xs text-destructive">{errors.root.message}</p>}
             <div className="flex justify-end">
-              <Button type="submit" disabled={creating || !createName.trim() || !createValue.trim()}>
-                {creating ? 'Creating…' : 'Create & insert'}
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? 'Creating…' : 'Create & insert'}
               </Button>
             </div>
           </form>

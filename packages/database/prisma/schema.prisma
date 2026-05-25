@@ -143,6 +143,7 @@ model Project {
   members     ProjectMember[]
   apiKeys     ApiKey[]
   tests       Test[]
+  testGroups  TestGroup[]
 
   @@map("projects")
 }
@@ -195,26 +196,43 @@ model ApiKey {
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
+model TestGroup {
+  id        String   @id @default(cuid())
+  name      String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  tests     Test[]
+
+  @@map("test_groups")
+}
+
 model Test {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  startUrl    String?
+  id                String   @id @default(cuid())
+  name              String
+  description       String?
+  startUrl          String?
   order             Int      @default(0)
   enabled           Boolean  @default(true)
   continueOnFailure Boolean  @default(false)
-  tags        String[] @default([])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  tags              String[] @default([])
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
-  projectId   String
-  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+  project   Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
-  steps       TestStep[]
-  runs        TestRun[]
+  groupId   String?
+  group     TestGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
 
-  prerequisites     Test[] @relation("TestPrerequisites")
-  prerequisiteOf    Test[] @relation("TestPrerequisites")
+  steps          TestStep[]
+  runs           TestRun[]
+  prerequisites  Test[]     @relation("TestPrerequisites")
+  prerequisiteOf Test[]     @relation("TestPrerequisites")
 
   @@map("tests")
 }

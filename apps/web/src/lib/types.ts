@@ -10,6 +10,14 @@ export interface TestPrerequisite {
   steps: TestStep[]
 }
 
+export interface TestGroup {
+  id: string
+  name: string
+  order: number
+  createdAt: string
+  _count?: { tests: number }
+}
+
 export interface Test {
   id: string
   name: string
@@ -20,6 +28,8 @@ export interface Test {
   order: number
   tags: string[]
   projectId: string
+  groupId?: string | null
+  group?: { id: string; name: string } | null
   prerequisites: TestPrerequisite[]
   createdAt: string
   updatedAt: string

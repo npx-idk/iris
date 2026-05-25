@@ -1,6 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { api } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
 import { API_KEY_ROLE_BADGE_VARIANT } from '@/lib/roles';
@@ -10,6 +13,12 @@ import { Button } from '@workspace/ui/components/button';
 import { Badge } from '@workspace/ui/components/badge';
 import { Input } from '@workspace/ui/components/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@workspace/ui/components/card';
+
+const schema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  role: z.enum(['CI', 'ADMIN'] as const),
+})
+type FormValues = z.infer<typeof schema>
 
 const API_KEY_ROLE_LABEL: Record<ApiKeyRole, string> = {
   CI: 'CI (trigger runs only)',
@@ -23,22 +32,23 @@ interface Props {
 }
 
 export function ApiKeyList({ apiKeys, projectId, onUpdate }: Props) {
-  const [name, setName] = useState('');
-  const [role, setRole] = useState<ApiKeyRole>('CI');
-  const [creating, setCreating] = useState(false);
   const [newKey, setNewKey] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  async function handleCreate(e: React.FormEvent) {
-    e.preventDefault();
-    setCreating(true);
+  const { register, handleSubmit, reset, setError, formState: { errors, isSubmitting } } = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    mode: 'onBlur',
+    defaultValues: { name: '', role: 'CI' },
+  });
+
+  async function onSubmit(values: FormValues) {
     try {
-      const key = await api.post<ApiKey>(`${ROUTES.project(projectId)}/api-keys`, { name, role });
+      const key = await api.post<ApiKey>(`${ROUTES.project(projectId)}/api-keys`, { name: values.name, role: values.role });
       setNewKey(key.raw!);
-      setName('');
+      reset();
       onUpdate();
-    } finally {
-      setCreating(false);
+    } catch (err) {
+      setError('root', { message: err instanceof Error ? err.message : 'Failed to create API key' });
     }
   }
 
@@ -86,28 +96,27 @@ export function ApiKeyList({ apiKeys, projectId, onUpdate }: Props) {
           <CardTitle>Create API key</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleCreate}>
+          <form onSubmit={handleSubmit(onSubmit)}>
             <div className="flex gap-2">
               <Input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
                 placeholder="CI Pipeline"
                 className="flex-1"
+                {...register('name')}
               />
               <select
-                value={role}
-                onChange={(e) => setRole(e.target.value as ApiKeyRole)}
+                {...register('role')}
                 className="h-7 rounded-md border border-input bg-card px-2 text-xs text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
               >
                 {API_KEY_ROLES.map((r) => (
                   <option key={r} value={r}>{API_KEY_ROLE_LABEL[r]}</option>
                 ))}
               </select>
-              <Button type="submit" disabled={creating}>
-                {creating ? 'Creating...' : 'Create'}
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? 'Creating...' : 'Create'}
               </Button>
             </div>
+            {errors.name && <p className="text-xs text-destructive mt-1">{errors.name.message}</p>}
+            {errors.root && <p className="text-xs text-destructive mt-1">{errors.root.message}</p>}
           </form>
         </CardContent>
       </Card>

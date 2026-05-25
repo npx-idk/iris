@@ -1,8 +1,10 @@
 'use client';
 
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { signIn } from '@/lib/auth-client';
 import { ROUTES } from '@/lib/routes';
 import { Button } from '@workspace/ui/components/button';
@@ -10,26 +12,25 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@workspace/ui/components/input';
 import { Label } from '@workspace/ui/components/label';
 
+const schema = z.object({
+  email: z.string().min(1, 'Email is required').email('Enter a valid email address'),
+  password: z.string().min(1, 'Password is required'),
+})
+type FormValues = z.infer<typeof schema>
+
 export function LoginForm() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const { register, handleSubmit, setError, formState: { errors, isSubmitting } } = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    mode: 'onBlur',
+  });
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-
-    const { error } = await signIn.email({ email, password });
-
+  async function onSubmit(values: FormValues) {
+    const { error } = await signIn.email({ email: values.email, password: values.password });
     if (error) {
-      setError(error.message ?? 'Invalid email or password');
-      setLoading(false);
+      setError('root', { message: error.message ?? 'Invalid email or password' });
       return;
     }
-
     router.push(ROUTES.dashboard);
   }
 
@@ -41,39 +42,27 @@ export function LoginForm() {
       </CardHeader>
 
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-1.5">
             <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              placeholder="you@example.com"
-            />
+            <Input id="email" type="email" placeholder="you@example.com" {...register('email')} />
+            {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
           </div>
 
           <div className="space-y-1.5">
             <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              placeholder="••••••••"
-            />
+            <Input id="password" type="password" placeholder="••••••••" {...register('password')} />
+            {errors.password && <p className="text-xs text-destructive">{errors.password.message}</p>}
           </div>
 
-          {error && (
+          {errors.root && (
             <p className="text-xs text-destructive bg-destructive/10 px-3 py-2 rounded-md">
-              {error}
+              {errors.root.message}
             </p>
           )}
 
-          <Button type="submit" disabled={loading} className="w-full" size="lg">
-            {loading ? 'Signing in...' : 'Sign in'}
+          <Button type="submit" disabled={isSubmitting} className="w-full" size="lg">
+            {isSubmitting ? 'Signing in...' : 'Sign in'}
           </Button>
         </form>
       </CardContent>

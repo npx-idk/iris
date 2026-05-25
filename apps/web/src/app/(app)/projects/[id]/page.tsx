@@ -1,6 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useSession } from '@/lib/auth-client';
@@ -181,6 +184,13 @@ export default function ProjectPage() {
   );
 }
 
+const settingsSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  baseUrl: z.string().min(1, 'Base URL is required').url('Enter a valid URL'),
+  description: z.string().optional(),
+})
+type SettingsValues = z.infer<typeof settingsSchema>
+
 function ProjectSettings({
   project, isOwner, onUpdate, onDelete,
 }: {
@@ -189,31 +199,25 @@ function ProjectSettings({
   onUpdate: () => void;
   onDelete: () => void;
 }) {
-  const [form, setForm] = useState({
-    name: project.name,
-    baseUrl: project.baseUrl,
-    description: project.description ?? '',
-  });
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    setForm({
-      name: project.name,
-      baseUrl: project.baseUrl,
-      description: project.description ?? '',
-    });
-  }, [project]);
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  async function handleSave(e: React.FormEvent) {
-    e.preventDefault();
-    setSaving(true);
+  const { register, handleSubmit, reset, setError, formState: { errors, isSubmitting } } = useForm<SettingsValues>({
+    resolver: zodResolver(settingsSchema),
+    mode: 'onBlur',
+    defaultValues: { name: project.name, baseUrl: project.baseUrl, description: project.description ?? '' },
+  });
+
+  useEffect(() => {
+    reset({ name: project.name, baseUrl: project.baseUrl, description: project.description ?? '' });
+  }, [project, reset]);
+
+  async function onSubmit(values: SettingsValues) {
     try {
-      await api.patch(`/projects/${project.id}`, form);
+      await api.patch(`/projects/${project.id}`, values);
       onUpdate();
-    } finally {
-      setSaving(false);
+    } catch (err) {
+      setError('root', { message: err instanceof Error ? err.message : 'Failed to save' });
     }
   }
 
@@ -234,34 +238,25 @@ function ProjectSettings({
           <CardTitle>General settings</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSave} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-1">
               <Label htmlFor="settings-name">Name</Label>
-              <Input
-                id="settings-name"
-                value={form.name}
-                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-              />
+              <Input id="settings-name" {...register('name')} />
+              {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
             </div>
             <div className="space-y-1">
               <Label htmlFor="settings-url">Base URL</Label>
-              <Input
-                id="settings-url"
-                value={form.baseUrl}
-                onChange={(e) => setForm((f) => ({ ...f, baseUrl: e.target.value }))}
-              />
+              <Input id="settings-url" {...register('baseUrl')} />
+              {errors.baseUrl && <p className="text-xs text-destructive">{errors.baseUrl.message}</p>}
             </div>
             <div className="space-y-1">
               <Label htmlFor="settings-desc">Description</Label>
-              <Textarea
-                id="settings-desc"
-                value={form.description}
-                onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-              />
+              <Textarea id="settings-desc" {...register('description')} />
             </div>
+            {errors.root && <p className="text-xs text-destructive">{errors.root.message}</p>}
             <div className="flex justify-end">
-              <Button type="submit" disabled={saving}>
-                {saving ? 'Saving...' : 'Save changes'}
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? 'Saving...' : 'Save changes'}
               </Button>
             </div>
           </form>

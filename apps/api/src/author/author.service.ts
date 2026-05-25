@@ -94,6 +94,12 @@ export class AuthoringService {
     })
     if (!test) { session.busy = false; return }
 
+    const workspaceId = test.project.workspaceId
+    const workspaceVars = workspaceId
+      ? await prisma.workspaceVariable.findMany({ where: { workspaceId } }).catch(() => [])
+      : []
+    const varsMap: Record<string, string> = Object.fromEntries(workspaceVars.map((v) => [v.name, v.value]))
+
     const allSegments = this.buildSegments(test, test.steps)
     const flat = allSegments.flatMap((seg) =>
       seg.steps.map((step, i) => ({
@@ -120,7 +126,7 @@ export class AuthoringService {
       current.steps.push({ instruction: step.instruction, variables: step.variables })
     }
 
-    this.doReplay(sessionId, session, segments, from).catch(() => {})
+    this.doReplay(sessionId, session, segments, from, varsMap).catch(() => {})
   }
 
   private buildSegments(
@@ -144,7 +150,11 @@ export class AuthoringService {
     session: BrowserSession,
     segments: ReplaySegment[],
     startFlatPos = 0,
+    varsMap: Record<string, string> = {},
   ): Promise<void> {
+    const interpolate = (s: string) =>
+      s.replace(/\{\{(\w+)\}\}/g, (_, k) => varsMap[k] ?? `{{${k}}}`)
+
     let pos = startFlatPos
     try {
       for (const segment of segments) {
@@ -156,7 +166,7 @@ export class AuthoringService {
           this.eventEmitter.emit(EVENTS.AUTHOR_STEP_STARTED(sessionId), { sessionId, pos })
           let passed = false
           try {
-            const result = await executeStep(session.stagehandInstance, step.instruction, {
+            const result = await executeStep(session.stagehandInstance, interpolate(step.instruction), {
               ...(step.variables && { variables: step.variables }),
             })
             passed = result.success
@@ -193,7 +203,22 @@ export class AuthoringService {
     const stepIndex = lastStep !== null ? lastStep.stepIndex + 1 : 0
 
     try {
-      const actResult = await executeStep(session.stagehandInstance, instruction, {
+      const testRecord = await prisma.test.findUnique({
+        where: { id: session.testId },
+        select: { project: { select: { workspaceId: true } } },
+      })
+      const workspaceId = testRecord?.project?.workspaceId
+      const workspaceVars = workspaceId
+        ? await prisma.workspaceVariable.findMany({ where: { workspaceId } }).catch(() => [])
+        : []
+      const resolvedInstruction = workspaceVars.length > 0
+        ? instruction.replace(/\{\{(\w+)\}\}/g, (_, key) => {
+            const found = workspaceVars.find((v) => v.name === key)
+            return found ? found.value : `{{${key}}}`
+          })
+        : instruction
+
+      const actResult = await executeStep(session.stagehandInstance, resolvedInstruction, {
         ...(variables && { variables }),
       })
 

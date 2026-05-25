@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { Folder01Icon, Logout01Icon } from '@hugeicons/core-free-icons';
+import { Folder01Icon, Logout01Icon, FirstBracketIcon } from '@hugeicons/core-free-icons';
 import { useSession, signOut } from '@/lib/auth-client';
 import { ROUTES } from '@/lib/routes';
 import {
@@ -55,6 +55,18 @@ export function AppSidebar() {
                   <Link href={ROUTES.dashboard}>
                     <HugeiconsIcon icon={Folder01Icon} size={16} color="currentColor" strokeWidth={1.5} />
                     <span>Projects</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === ROUTES.variables}
+                  tooltip="Variables"
+                >
+                  <Link href={ROUTES.variables}>
+                    <HugeiconsIcon icon={FirstBracketIcon} size={16} color="currentColor" strokeWidth={1.5} />
+                    <span>Variables</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

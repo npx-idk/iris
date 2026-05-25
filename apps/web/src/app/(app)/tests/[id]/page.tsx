@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '@/lib/api'
-import { TestWithSteps, BrowserTab, RunStatus, TestRun, TestRunStep, BrowserEventLog } from '@/lib/types'
+import { TestWithSteps, BrowserTab, RunStatus, TestRun, TestRunStep, BrowserEventLog, WorkspaceVariable } from '@/lib/types'
 import { ROUTES } from '@/lib/routes'
 import { PrerequisiteManager } from '@/components/tests/PrerequisiteManager'
 import { BrowserPanel } from '@/components/tests/BrowserPanel'
@@ -35,6 +35,11 @@ export default function TestPage() {
   const { data: test, refetch } = useQuery({
     queryKey: ['test', testId],
     queryFn: () => api.get<TestWithSteps>(`/tests/${testId}`),
+  })
+
+  const { data: workspaceVariables = [], refetch: refetchVariables } = useQuery({
+    queryKey: ['workspace-variables'],
+    queryFn: () => api.get<WorkspaceVariable[]>('/workspace/variables'),
   })
 
   // Last completed run — used to seed the recording and step screenshots
@@ -520,6 +525,8 @@ export default function TestPage() {
               lastRunStepMap={activeStepMap}
               selectedStepId={selectedStepId}
               onSelectStep={setSelectedStepId}
+              projectVariables={workspaceVariables}
+              onVariableCreated={() => refetchVariables()}
             />
           )}
 

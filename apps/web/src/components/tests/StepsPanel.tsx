@@ -7,12 +7,12 @@ import {
   type DragEndEvent,
 } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
-import { TestWithSteps, TestStep, TestPrerequisite, TestRunStep } from '@/lib/types'
+import { TestWithSteps, TestStep, TestPrerequisite, TestRunStep, WorkspaceVariable } from '@/lib/types'
 import { ROUTES } from '@/lib/routes'
 import { SavedStepRow, LiveStepCard, ChevronIcon, type LiveStep } from './StepRows'
+import { SlashCommandMenu } from './SlashCommandMenu'
 import { SessionState } from '@/hooks/useAuthorSession'
 import { Button } from '@workspace/ui/components/button'
-import { Textarea } from '@workspace/ui/components/textarea'
 import { Badge } from '@workspace/ui/components/badge'
 import { TooltipProvider } from '@workspace/ui/components/tooltip'
 
@@ -46,6 +46,8 @@ interface StepsPanelProps {
   lastRunStepMap?: Map<string, TestRunStep>
   selectedStepId?: string | null
   onSelectStep?: (id: string | null) => void
+  projectVariables?: WorkspaceVariable[]
+  onVariableCreated?: () => void
 }
 
 export function StepsPanel({
@@ -58,6 +60,7 @@ export function StepsPanel({
   onDeleteStep, onSaveStep, onReorderSteps,
   lastRunStepMap,
   selectedStepId, onSelectStep,
+  projectVariables = [], onVariableCreated,
 }: StepsPanelProps) {
   const dndSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }))
 
@@ -145,6 +148,8 @@ export function StepsPanel({
                           onRunStep={isReady ? () => onSeek({ fromFlatPos: pos, toFlatPos: pos, navigate: false, label: 'Running step…' }) : undefined}
                           onRunTill={isReady ? () => onSeek({ toFlatPos: pos, label: 'Running up to step…' }) : undefined}
                           onRunFrom={isReady ? () => onSeek({ fromFlatPos: pos, navigate: false, label: 'Running from step…' }) : undefined}
+                          projectVariables={projectVariables}
+                          onVariableCreated={onVariableCreated}
                         />
                       )
                     })}
@@ -178,18 +183,20 @@ export function StepsPanel({
 
       {/* Step input */}
       <div className="border-t border-border p-4 space-y-2 shrink-0">
-        <Textarea
+        <SlashCommandMenu
+          value={instruction}
+          onChange={onInstructionChange}
+          variables={projectVariables}
+          onVariableCreated={onVariableCreated ?? (() => {})}
           placeholder={
-            sessionState === 'idle' ? 'Click to open a live browser…'
+            sessionState === 'idle' ? 'Click to open a live browser… (type / for commands)'
             : sessionState === 'starting' ? 'Launching browser…'
             : isBusy ? statusLabel || 'Replaying steps…'
-            : hasContent ? 'Enter → run step   ⌘↵ → replay all above first'
-            : 'Enter → run step'
+            : hasContent ? 'Enter → run   ⌘↵ → replay first   / → insert variable'
+            : 'Enter → run step   / → insert variable'
           }
-          value={instruction}
-          onChange={(e) => onInstructionChange(e.target.value)}
-          onFocus={onFocus}
           onKeyDown={onKeyDown}
+          onFocus={onFocus}
           disabled={isBusy}
           className="resize-none min-h-[80px]"
         />

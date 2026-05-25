@@ -10,6 +10,7 @@ import { UpdateTestDto } from './dto/update-test.dto'
 import { UpsertStepsDto } from './dto/upsert-steps.dto'
 import { ReorderTestsDto } from './dto/reorder-tests.dto'
 import { AddPrerequisiteDto } from './dto/add-prerequisite.dto'
+import { ImportSuiteDto } from './dto/import-suite.dto'
 
 @UseGuards(AuthGuard)
 @Controller()
@@ -81,6 +82,20 @@ export class TestsController {
     @Param('prerequisiteId') prerequisiteId: string,
   ) {
     return this.tests.removePrerequisite(id, user.id, prerequisiteId)
+  }
+
+  @Get('projects/:projectId/export')
+  exportSuite(@CurrentUser() user: any, @Param('projectId') projectId: string) {
+    return this.tests.exportSuite(projectId, user.id)
+  }
+
+  @Post('projects/:projectId/import')
+  importSuite(
+    @CurrentUser() user: any,
+    @Param('projectId') projectId: string,
+    @Body() dto: ImportSuiteDto,
+  ) {
+    return this.tests.importSuite(projectId, user.id, dto)
   }
 
   @Put('tests/:id/steps')

@@ -10,6 +10,7 @@ import { QueueModule } from './queue/queue.module'
 import { SessionModule } from './sessions/session.module'
 import { AuthoringModule } from './author/author.module'
 import { CiModule } from './ci/ci.module'
+import { WorkspaceModule } from './workspace/workspace.module'
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { CiModule } from './ci/ci.module'
     SessionModule,
     AuthoringModule,
     CiModule,
+    WorkspaceModule,
   ],
 })
 export class AppModule {}

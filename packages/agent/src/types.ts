@@ -81,6 +81,7 @@ export interface RunConfig {
   testId: string
   startUrl: string
   steps: AgentStep[]
+  projectVariables?: Record<string, string>
   env: BrowserEnv
   geminiApiKey: string
   browserbaseApiKey?: string

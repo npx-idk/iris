@@ -9,10 +9,10 @@ import {
   ArrowDown01Icon, ArrowRight01Icon,
   PlayIcon, NextIcon, PreviousIcon, Cancel01Icon, Edit01Icon,
 } from '@hugeicons/core-free-icons'
-import { TestStep, TestRunStep } from '@/lib/types'
+import { TestStep, TestRunStep, WorkspaceVariable } from '@/lib/types'
+import { SlashCommandMenu } from './SlashCommandMenu'
 
 import { Button } from '@workspace/ui/components/button'
-import { Textarea } from '@workspace/ui/components/textarea'
 import { Badge } from '@workspace/ui/components/badge'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@workspace/ui/components/tooltip'
 
@@ -53,6 +53,8 @@ export function SavedStepRow({
   onRunStep,
   onRunTill,
   onRunFrom,
+  projectVariables = [],
+  onVariableCreated,
 }: {
   step: TestStep
   onDelete?: () => void
@@ -65,6 +67,8 @@ export function SavedStepRow({
   onRunStep?: () => void
   onRunTill?: () => void
   onRunFrom?: () => void
+  projectVariables?: WorkspaceVariable[]
+  onVariableCreated?: () => void
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: step.id, disabled: dimmed })
   const [editing, setEditing] = useState(false)
@@ -110,9 +114,11 @@ export function SavedStepRow({
             className="flex-1 text-xs bg-transparent border-b border-border focus:border-ring outline-none text-muted-foreground py-0.5"
           />
         </div>
-        <Textarea
+        <SlashCommandMenu
           value={editInstruction}
-          onChange={(e) => setEditInstruction(e.target.value)}
+          onChange={setEditInstruction}
+          variables={projectVariables}
+          onVariableCreated={onVariableCreated ?? (() => {})}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); commitEdit() }
             if (e.key === 'Escape') cancelEdit()

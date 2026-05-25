@@ -14,9 +14,11 @@ import { CreateApiKeyDto } from './dto/create-api-key.dto';
 import { generateApiKey } from '../common/utils/api-key.util';
 import { uniqueSlug } from '../common/utils/slug.util';
 import { can, type ProjectRole } from '@iris/common';
+import { WorkspaceService } from '../workspace/workspace.service';
 
 @Injectable()
 export class ProjectsService {
+  constructor(private readonly workspaceService: WorkspaceService) {}
 
   // ─── Projects ──────────────────────────────────────────────────────────────
 
@@ -61,6 +63,12 @@ export class ProjectsService {
   }
 
   async create(userId: string, dto: CreateProjectDto) {
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { name: true } });
+    const workspace = await this.workspaceService.findOrCreate(
+      userId,
+      user?.name ? `${user.name}'s workspace` : 'My workspace',
+    );
+
     const slug = await uniqueSlug(
       dto.slug ?? dto.name,
       async (s) => !!(await prisma.project.findUnique({ where: { slug: s } })),
@@ -72,6 +80,7 @@ export class ProjectsService {
         slug,
         description: dto.description,
         baseUrl: dto.baseUrl,
+        workspaceId: workspace.id,
         members: {
           create: { userId, role: 'OWNER' },
         },

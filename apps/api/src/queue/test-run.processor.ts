@@ -91,7 +91,7 @@ export class TestRunProcessor {
 
     const test = await prisma.test.findUnique({
       where: { id: runRecord.testId },
-      include: { steps: { orderBy: { stepIndex: 'asc' } }, project: true },
+      include: { steps: { orderBy: { stepIndex: 'asc' } }, project: { include: { workspace: true } } },
     })
 
     if (!test) {
@@ -102,6 +102,10 @@ export class TestRunProcessor {
       await this.failRun(runId, 'Test has no steps')
       return { status: 'FAILED', errorMessage: 'Test has no steps' }
     }
+
+    const workspaceId = test.project.workspace.id
+    const workspaceVars = await prisma.workspaceVariable.findMany({ where: { workspaceId } })
+    const projectVariables = Object.fromEntries(workspaceVars.map((v) => [v.name, v.value]))
 
     const localLiveViewUrl = `ws://localhost:${process.env.API_PORT ?? 3000}/sessions/${runId}/stream`
 
@@ -137,6 +141,7 @@ export class TestRunProcessor {
         geminiApiKey: process.env.GEMINI_API_KEY!,
         browserbaseApiKey: process.env.BROWSERBASE_API_KEY,
         browserbaseProjectId: process.env.BROWSERBASE_PROJECT_ID,
+        projectVariables,
         continueOnFailure: test.continueOnFailure,
 
         onStepComplete: async (log: StepLog) => {

@@ -4,6 +4,10 @@ import { RunConfig, RunResult, StepLog, StepAction, RunMetrics, CacheStatus, Sto
 
 const VERIFY_RE = /^\s*(verify|check|assert|confirm|ensure|validate|make\s+sure|is\s+there|are\s+there|does|should\s+be|should\s+see|should\s+have|should\s+not|must\s+be|must\s+have|varify)\b/i
 
+function interpolate(instruction: string, vars: Record<string, string>): string {
+  return instruction.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] ?? `{{${key}}}`)
+}
+
 const verifySchema = z.object({ met: z.boolean(), observation: z.string() })
 
 type StepActResult = { success: boolean; message?: string; cacheStatus?: CacheStatus; actions?: StepAction[] }
@@ -297,7 +301,10 @@ export async function runTest(
         if (typeof step.instruction !== 'string' || !step.instruction.trim()) {
           throw new Error(`Step ${step.stepIndex}: instruction must be a non-empty string, got: ${JSON.stringify(step.instruction)}`)
         }
-        actResult = await executeStep(stagehand, step.instruction, {
+        const resolvedInstruction = config.projectVariables
+          ? interpolate(step.instruction, config.projectVariables)
+          : step.instruction
+        actResult = await executeStep(stagehand, resolvedInstruction, {
           ...(step.variables && { variables: step.variables }),
         })
       } catch (err) {

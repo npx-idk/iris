@@ -19,10 +19,11 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  sessions       Session[]
-  accounts       Account[]
-  projectMembers ProjectMember[]
-  apiKeys        ApiKey[]
+  sessions         Session[]
+  accounts         Account[]
+  projectMembers   ProjectMember[]
+  workspaceMembers WorkspaceMember[]
+  apiKeys          ApiKey[]
 
   @@map("users")
 }
@@ -73,6 +74,58 @@ model Verification {
   @@map("verifications")
 }
 
+// ─── Workspaces ───────────────────────────────────────────────────────────────
+
+model Workspace {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members   WorkspaceMember[]
+  projects  Project[]
+  variables WorkspaceVariable[]
+
+  @@map("workspaces")
+}
+
+enum WorkspaceRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+model WorkspaceMember {
+  id        String        @id @default(cuid())
+  role      WorkspaceRole @default(MEMBER)
+  createdAt DateTime      @default(now())
+
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, workspaceId])
+  @@map("workspace_members")
+}
+
+model WorkspaceVariable {
+  id          String    @id @default(cuid())
+  name        String
+  value       String
+  isSecret    Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, name])
+  @@map("workspace_variables")
+}
+
 // ─── Projects ─────────────────────────────────────────────────────────────────
 
 model Project {
@@ -83,6 +136,9 @@ model Project {
   baseUrl     String
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
+
+  workspaceId String
+  workspace   Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   members     ProjectMember[]
   apiKeys     ApiKey[]

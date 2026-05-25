@@ -95,6 +95,15 @@ export interface StepAction {
   arguments: unknown[]
 }
 
+export interface WorkspaceVariable {
+  id: string
+  name: string
+  value: string
+  isSecret: boolean
+  createdAt: string
+  updatedAt: string
+}
+
 export interface TestRunStep {
   id: string
   stepIndex: number

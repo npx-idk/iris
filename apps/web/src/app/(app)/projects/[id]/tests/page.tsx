@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
@@ -18,6 +18,10 @@ export default function TestsPage() {
   const router = useRouter()
   const [dragging, setDragging] = useState<string | null>(null)
   const [localTests, setLocalTests] = useState<Test[] | null>(null)
+  const [importing, setImporting] = useState(false)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState(false)
+  const importRef = useRef<HTMLInputElement>(null)
 
   const { data: fetchedTests = [], isLoading, refetch } = useQuery({
     queryKey: ['tests', projectId],
@@ -54,6 +58,44 @@ export default function TestsPage() {
     refetch()
   }, [localTests, projectId, refetch])
 
+  async function handleExport() {
+    const data = await api.get(`/projects/${projectId}/export`)
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `iris-suite-${projectId}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  async function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ''
+    setImporting(true)
+    try {
+      const text = await file.text()
+      const json = JSON.parse(text)
+      const payload = json.tests ? { tests: json.tests } : json
+      await api.post(`/projects/${projectId}/import`, payload)
+      refetch()
+    } finally {
+      setImporting(false)
+    }
+  }
+
+  async function handleDelete(testId: string) {
+    setDeleting(true)
+    try {
+      await api.delete(`/tests/${testId}`)
+      setConfirmDeleteId(null)
+      refetch()
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   const lastRunStatus = (test: Test): RunStatus | undefined =>
     test.runs?.[0]?.status as RunStatus | undefined
 
@@ -81,6 +123,19 @@ export default function TestsPage() {
           >
             ▶ Run all
           </Button>
+          <Button variant="outline" size="sm" onClick={handleExport} disabled={tests.length === 0}>
+            Export
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => importRef.current?.click()} disabled={importing}>
+            {importing ? 'Importing…' : 'Import'}
+          </Button>
+          <input
+            ref={importRef}
+            type="file"
+            accept=".json"
+            className="hidden"
+            onChange={handleImportFile}
+          />
           <Button asChild size="sm">
             <Link href={ROUTES.projectTestNew(projectId)}>+ New test</Link>
           </Button>
@@ -145,6 +200,39 @@ export default function TestsPage() {
                       <Badge variant="outline" className="text-xs text-muted-foreground">
                         disabled
                       </Badge>
+                    )}
+                    {confirmDeleteId === test.id ? (
+                      <div
+                        className="flex items-center gap-2"
+                        onClick={(e) => e.preventDefault()}
+                        onDragStart={(e) => e.stopPropagation()}
+                      >
+                        <span className="text-xs text-destructive font-medium">Delete?</span>
+                        <Button
+                          size="xs"
+                          variant="destructive"
+                          disabled={deleting}
+                          onClick={(e) => { e.preventDefault(); handleDelete(test.id) }}
+                        >
+                          {deleting ? '…' : 'Yes'}
+                        </Button>
+                        <Button
+                          size="xs"
+                          variant="ghost"
+                          onClick={(e) => { e.preventDefault(); setConfirmDeleteId(null) }}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button
+                        size="xs"
+                        variant="ghost"
+                        className="text-muted-foreground hover:text-destructive"
+                        onClick={(e) => { e.preventDefault(); setConfirmDeleteId(test.id) }}
+                      >
+                        Delete
+                      </Button>
                     )}
                   </div>
                 </div>

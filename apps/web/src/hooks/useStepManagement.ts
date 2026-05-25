@@ -11,7 +11,7 @@ export function useStepManagement(
 ) {
   async function saveSteps(steps: TestStep[]) {
     await api.put(`/tests/${testId}/steps`, {
-      steps: steps.map((s, i) => ({ id: s.id, stepIndex: i, instruction: s.instruction, description: s.description })),
+      steps: steps.map((s, i) => ({ id: s.id, stepIndex: i, instruction: s.instruction, description: s.description, variables: s.variables })),
     })
     refetch()
   }

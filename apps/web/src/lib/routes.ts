@@ -8,4 +8,5 @@ export const ROUTES = {
   projectTests: (id: string) => `/projects/${id}/tests`,
   projectTestNew: (id: string) => `/projects/${id}/tests/new`,
   test: (id: string) => `/tests/${id}`,
+  variables: '/variables',
 } as const;

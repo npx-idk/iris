@@ -8,18 +8,18 @@ import { api } from '@/lib/api';
 import { ROUTES } from '@/lib/routes';
 import type { ProjectMember } from '@/lib/types';
 import { ASSIGNABLE_PROJECT_ROLES, type AssignableProjectRole } from '@iris/common';
-import { Button } from '@workspace/ui/components/animate-ui/components/buttons/button';
+import { Button } from '@iris/ui/components/animate-ui/components/buttons/button';
 import { ConfirmDialog } from '@/components/confirm-dialog';
-import { Input } from '@workspace/ui/components/input';
-import { Card, CardHeader, CardTitle, CardAction } from '@workspace/ui/components/card';
+import { Input } from '@iris/ui/components/input';
+import { Card, CardHeader, CardTitle, CardAction } from '@iris/ui/components/card';
 import {
   Dialog, DialogTrigger, DialogContent, DialogHeader,
   DialogTitle, DialogFooter, DialogClose,
-} from '@workspace/ui/components/animate-ui/components/radix/dialog';
+} from '@iris/ui/components/animate-ui/components/radix/dialog';
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent,
   DropdownMenuRadioGroup, DropdownMenuRadioItem,
-} from '@workspace/ui/components/animate-ui/components/radix/dropdown-menu';
+} from '@iris/ui/components/animate-ui/components/radix/dropdown-menu';
 
 const schema = z.object({
   email: z.string().min(1, 'Email is required').email('Enter a valid email address'),

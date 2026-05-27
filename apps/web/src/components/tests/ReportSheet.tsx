@@ -14,15 +14,15 @@ import { BlockNoteView } from '@blocknote/shadcn'
 import '@blocknote/shadcn/style.css'
 import '@blocknote/core/fonts/inter.css'
 
-import { Button } from '@workspace/ui/components/button'
-import { Badge } from '@workspace/ui/components/badge'
-import { Input } from '@workspace/ui/components/input'
-import { Label } from '@workspace/ui/components/label'
-import { Popover, PopoverContent, PopoverTrigger } from '@workspace/ui/components/popover'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@workspace/ui/components/select'
-import { Card, CardContent } from '@workspace/ui/components/card'
-import { Skeleton } from '@workspace/ui/components/skeleton'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@workspace/ui/components/tooltip'
+import { Button } from '@iris/ui/components/button'
+import { Badge } from '@iris/ui/components/badge'
+import { Input } from '@iris/ui/components/input'
+import { Label } from '@iris/ui/components/label'
+import { Popover, PopoverContent, PopoverTrigger } from '@iris/ui/components/popover'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@iris/ui/components/select'
+import { Card, CardContent } from '@iris/ui/components/card'
+import { Skeleton } from '@iris/ui/components/skeleton'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@iris/ui/components/tooltip'
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -34,10 +34,10 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from '@workspace/ui/components/animate-ui/components/radix/dropdown-menu'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/components/animate-ui/components/radix/tabs'
-import { Toggle } from '@workspace/ui/components/animate-ui/components/radix/toggle'
-import { Sheet, SheetContent, SheetTitle } from '@workspace/ui/components/sheet'
+} from '@iris/ui/components/animate-ui/components/radix/dropdown-menu'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@iris/ui/components/animate-ui/components/radix/tabs'
+import { Toggle } from '@iris/ui/components/animate-ui/components/radix/toggle'
+import { Sheet, SheetContent, SheetTitle } from '@iris/ui/components/sheet'
 
 import { TestWithSteps, TestRun } from '@/lib/types'
 

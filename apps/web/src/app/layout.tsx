@@ -1,9 +1,9 @@
 import { Outfit, Geist_Mono } from "next/font/google"
 
-import "@workspace/ui/globals.css"
+import "@iris/ui/globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { QueryProvider } from "@/components/query-provider"
-import { cn } from "@workspace/ui/lib/utils";
+import { cn } from "@iris/ui/lib/utils";
 
 const outfit = Outfit({ subsets: ['latin'], variable: '--font-sans' })
 

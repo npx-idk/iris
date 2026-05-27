@@ -14,19 +14,19 @@ import type { ProjectDetail, ApiKey } from '@/lib/types';
 import { ROUTES } from '@/lib/routes';
 import { can } from '@iris/common';
 import { useQuery } from '@tanstack/react-query';
-import { Button } from '@workspace/ui/components/button';
-import { Input } from '@workspace/ui/components/input';
-import { Textarea } from '@workspace/ui/components/textarea';
-import { Label } from '@workspace/ui/components/label';
+import { Button } from '@iris/ui/components/button';
+import { Input } from '@iris/ui/components/input';
+import { Textarea } from '@iris/ui/components/textarea';
+import { Label } from '@iris/ui/components/label';
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
   CardDescription,
-} from '@workspace/ui/components/card';
-import { Separator } from '@workspace/ui/components/separator';
-import { SidebarTrigger } from '@workspace/ui/components/sidebar';
+} from '@iris/ui/components/card';
+import { Separator } from '@iris/ui/components/separator';
+import { SidebarTrigger } from '@iris/ui/components/sidebar';
 
 type Tab = 'dashboard' | 'members' | 'api-keys' | 'settings';
 

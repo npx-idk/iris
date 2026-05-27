@@ -11,8 +11,8 @@ import {
   type AccordionItemProps as AccordionItemPrimitiveProps,
   type AccordionTriggerProps as AccordionTriggerPrimitiveProps,
   type AccordionContentProps as AccordionContentPrimitiveProps,
-} from '@workspace/ui/components/animate-ui/primitives/radix/accordion';
-import { cn } from '@workspace/ui/lib/utils';
+} from '@iris/ui/components/animate-ui/primitives/radix/accordion';
+import { cn } from '@iris/ui/lib/utils';
 
 type AccordionProps = AccordionPrimitiveProps;
 

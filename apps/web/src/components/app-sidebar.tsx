@@ -16,11 +16,11 @@ import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup,
   SidebarGroupContent, SidebarHeader, SidebarMenu,
   SidebarMenuButton, SidebarMenuItem,
-} from '@workspace/ui/components/sidebar';
+} from '@iris/ui/components/sidebar';
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent,
   DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel,
-} from '@workspace/ui/components/animate-ui/components/radix/dropdown-menu';
+} from '@iris/ui/components/animate-ui/components/radix/dropdown-menu';
 
 export function AppSidebar() {
   const pathname = usePathname();

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { api } from '@/lib/api'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { PlayIcon, PauseIcon, Refresh01Icon } from '@hugeicons/core-free-icons'
-import { Button } from '@workspace/ui/components/animate-ui/components/buttons/button'
+import { Button } from '@iris/ui/components/animate-ui/components/buttons/button'
 
 interface FramePlayerProps {
   runId: string

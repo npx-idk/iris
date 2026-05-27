@@ -19,10 +19,10 @@ import {
 import { api } from '@/lib/api'
 import { ROUTES } from '@/lib/routes'
 import { Test, Flow, RunStatus, TestRun, TestRunStep } from '@/lib/types'
-import { Button } from '@workspace/ui/components/button'
-import { Badge } from '@workspace/ui/components/badge'
-import { Separator } from '@workspace/ui/components/separator'
-import { Skeleton } from '@workspace/ui/components/skeleton'
+import { Button } from '@iris/ui/components/button'
+import { Badge } from '@iris/ui/components/badge'
+import { Separator } from '@iris/ui/components/separator'
+import { Skeleton } from '@iris/ui/components/skeleton'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 

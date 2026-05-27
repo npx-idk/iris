@@ -5,8 +5,8 @@ import {
   AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader,
   AlertDialogTitle, AlertDialogDescription, AlertDialogFooter,
   AlertDialogAction, AlertDialogCancel,
-} from '@workspace/ui/components/animate-ui/components/radix/alert-dialog';
-import { buttonVariants } from '@workspace/ui/components/animate-ui/components/buttons/button';
+} from '@iris/ui/components/animate-ui/components/radix/alert-dialog';
+import { buttonVariants } from '@iris/ui/components/animate-ui/components/buttons/button';
 
 interface ConfirmDialogProps {
   trigger: React.ReactNode;

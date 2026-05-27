@@ -9,10 +9,10 @@ import {
   HighlightItem,
   type HighlightItemProps,
   type HighlightProps,
-} from '@workspace/ui/components/animate-ui/primitives/effects/highlight';
-import { getStrictContext } from '@workspace/ui/lib/get-strict-context';
-import { useControlledState } from '@workspace/ui/hooks/use-controlled-state';
-import { useDataState } from '@workspace/ui/hooks/use-data-state';
+} from '@iris/ui/components/animate-ui/primitives/effects/highlight';
+import { getStrictContext } from '@iris/ui/lib/get-strict-context';
+import { useControlledState } from '@iris/ui/hooks/use-controlled-state';
+import { useDataState } from '@iris/ui/hooks/use-data-state';
 
 type DropdownMenuContextType = {
   isOpen: boolean;

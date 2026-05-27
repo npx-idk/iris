@@ -5,19 +5,19 @@ import { useQuery } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import type { Test } from '@/lib/types'
 import type { ExploreResult, GeneratedTest } from '@iris/agent'
-import { Button } from '@workspace/ui/components/animate-ui/components/buttons/button'
-import { Checkbox } from '@workspace/ui/components/animate-ui/components/radix/checkbox'
-import { Input } from '@workspace/ui/components/input'
-import { Textarea } from '@workspace/ui/components/textarea'
-import { Label } from '@workspace/ui/components/label'
-import { Badge } from '@workspace/ui/components/badge'
+import { Button } from '@iris/ui/components/animate-ui/components/buttons/button'
+import { Checkbox } from '@iris/ui/components/animate-ui/components/radix/checkbox'
+import { Input } from '@iris/ui/components/input'
+import { Textarea } from '@iris/ui/components/textarea'
+import { Label } from '@iris/ui/components/label'
+import { Badge } from '@iris/ui/components/badge'
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
-} from '@workspace/ui/components/sheet'
+} from '@iris/ui/components/sheet'
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent,
   DropdownMenuRadioGroup, DropdownMenuRadioItem,
-} from '@workspace/ui/components/animate-ui/components/radix/dropdown-menu'
+} from '@iris/ui/components/animate-ui/components/radix/dropdown-menu'
 
 type Phase = 'input' | 'loading' | 'review'
 

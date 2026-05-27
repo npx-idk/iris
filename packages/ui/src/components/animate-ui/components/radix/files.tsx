@@ -21,8 +21,8 @@ import {
   type FolderContentProps as FolderContentPrimitiveProps,
   type FileProps as FilePrimitiveProps,
   type FileLabelProps as FileLabelPrimitiveProps,
-} from '@workspace/ui/components/animate-ui/primitives/radix/files';
-import { cn } from '@workspace/ui/lib/utils';
+} from '@iris/ui/components/animate-ui/primitives/radix/files';
+import { cn } from '@iris/ui/lib/utils';
 
 type GitStatus = 'untracked' | 'modified' | 'deleted';
 

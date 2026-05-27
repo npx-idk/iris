@@ -4,8 +4,8 @@ import {
   Checkbox as CheckboxPrimitive,
   CheckboxIndicator as CheckboxIndicatorPrimitive,
   type CheckboxProps as CheckboxPrimitiveProps,
-} from '@workspace/ui/components/animate-ui/primitives/radix/checkbox';
-import { cn } from '@workspace/ui/lib/utils';
+} from '@iris/ui/components/animate-ui/primitives/radix/checkbox';
+import { cn } from '@iris/ui/lib/utils';
 import { cva, type VariantProps } from 'class-variance-authority';
 
 const checkboxVariants = cva(

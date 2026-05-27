@@ -9,14 +9,14 @@ import { FlowSquareIcon, Add01Icon, Delete02Icon } from '@hugeicons/core-free-ic
 import { api } from '@/lib/api'
 import { ROUTES } from '@/lib/routes'
 import { FlowSummary } from '@/lib/types'
-import { Button } from '@workspace/ui/components/button'
-import { Input } from '@workspace/ui/components/input'
-import { Skeleton } from '@workspace/ui/components/skeleton'
-import { Separator } from '@workspace/ui/components/separator'
-import { SidebarTrigger } from '@workspace/ui/components/sidebar'
+import { Button } from '@iris/ui/components/button'
+import { Input } from '@iris/ui/components/input'
+import { Skeleton } from '@iris/ui/components/skeleton'
+import { Separator } from '@iris/ui/components/separator'
+import { SidebarTrigger } from '@iris/ui/components/sidebar'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
-} from '@workspace/ui/components/animate-ui/components/radix/dialog'
+} from '@iris/ui/components/animate-ui/components/radix/dialog'
 
 export default function FlowsPage() {
   const { id: projectId } = useParams<{ id: string }>()

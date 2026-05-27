@@ -10,8 +10,8 @@ import {
   type LegacyAnimationControls,
 } from 'motion/react';
 
-import { getStrictContext } from '@workspace/ui/lib/get-strict-context';
-import { useControlledState } from '@workspace/ui/hooks/use-controlled-state';
+import { getStrictContext } from '@iris/ui/lib/get-strict-context';
+import { useControlledState } from '@iris/ui/hooks/use-controlled-state';
 
 type SwitchContextType = {
   isChecked: boolean;

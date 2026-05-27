@@ -12,13 +12,13 @@ import { ROUTES } from '@/lib/routes'
 import { SavedStepRow, LiveStepCard, ChevronIcon, type LiveStep } from './StepRows'
 import { SlashCommandMenu } from './SlashCommandMenu'
 import { SessionState } from '@/hooks/useAuthorSession'
-import { Button } from '@workspace/ui/components/animate-ui/components/buttons/button'
-import { Badge } from '@workspace/ui/components/badge'
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@workspace/ui/components/tooltip'
+import { Button } from '@iris/ui/components/animate-ui/components/buttons/button'
+import { Badge } from '@iris/ui/components/badge'
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@iris/ui/components/tooltip'
 import { 
   TestResults, TestResultsHeader, TestResultsSummary, TestResultsDuration, 
   TestResultsProgress, TestSuite, TestSuiteName, TestSuiteContent, TestSuiteStats
-} from '@workspace/ui/components/ai-elements/test-results'
+} from '@iris/ui/components/ai-elements/test-results'
 
 type SeekOpts = { fromFlatPos?: number; toFlatPos?: number; navigate?: boolean; label?: string }
 

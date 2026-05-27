@@ -11,8 +11,8 @@ import {
   type TooltipProps as TooltipPrimitiveProps,
   type TooltipTriggerProps as TooltipTriggerPrimitiveProps,
   type TooltipContentProps as TooltipContentPrimitiveProps,
-} from '@workspace/ui/components/animate-ui/primitives/radix/tooltip';
-import { cn } from '@workspace/ui/lib/utils';
+} from '@iris/ui/components/animate-ui/primitives/radix/tooltip';
+import { cn } from '@iris/ui/lib/utils';
 
 type TooltipProviderProps = TooltipProviderPrimitiveProps;
 

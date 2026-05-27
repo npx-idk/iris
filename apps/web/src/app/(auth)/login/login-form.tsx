@@ -7,10 +7,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { signIn } from '@/lib/auth-client';
 import { ROUTES } from '@/lib/routes';
-import { Button } from '@workspace/ui/components/animate-ui/components/buttons/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@workspace/ui/components/card';
-import { Input } from '@workspace/ui/components/input';
-import { Label } from '@workspace/ui/components/label';
+import { Button } from '@iris/ui/components/animate-ui/components/buttons/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@iris/ui/components/card';
+import { Input } from '@iris/ui/components/input';
+import { Label } from '@iris/ui/components/label';
 
 const schema = z.object({
   email: z.string().min(1, 'Email is required').email('Enter a valid email address'),

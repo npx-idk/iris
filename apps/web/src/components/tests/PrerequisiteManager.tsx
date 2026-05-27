@@ -4,12 +4,12 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import { TestWithSteps, Test } from '@/lib/types'
-import { Button } from '@workspace/ui/components/animate-ui/components/buttons/button'
-import { Card, CardContent } from '@workspace/ui/components/card'
+import { Button } from '@iris/ui/components/animate-ui/components/buttons/button'
+import { Card, CardContent } from '@iris/ui/components/card'
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent,
   DropdownMenuRadioGroup, DropdownMenuRadioItem,
-} from '@workspace/ui/components/animate-ui/components/radix/dropdown-menu'
+} from '@iris/ui/components/animate-ui/components/radix/dropdown-menu'
 
 interface Props {
   test: TestWithSteps

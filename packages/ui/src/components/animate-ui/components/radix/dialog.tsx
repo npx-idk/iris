@@ -21,8 +21,8 @@ import {
   type DialogTriggerProps as DialogTriggerPrimitiveProps,
   type DialogOverlayProps as DialogOverlayPrimitiveProps,
   type DialogCloseProps as DialogClosePrimitiveProps,
-} from '@workspace/ui/components/animate-ui/primitives/radix/dialog';
-import { cn } from '@workspace/ui/lib/utils';
+} from '@iris/ui/components/animate-ui/primitives/radix/dialog';
+import { cn } from '@iris/ui/lib/utils';
 
 type DialogProps = DialogPrimitiveProps;
 

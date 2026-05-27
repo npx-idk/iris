@@ -14,13 +14,13 @@ import {
   HighlightItem,
   type HighlightProps,
   type HighlightItemProps,
-} from '@workspace/ui/components/animate-ui/primitives/effects/highlight';
-import { getStrictContext } from '@workspace/ui/lib/get-strict-context';
-import { useControlledState } from '@workspace/ui/hooks/use-controlled-state';
+} from '@iris/ui/components/animate-ui/primitives/effects/highlight';
+import { getStrictContext } from '@iris/ui/lib/get-strict-context';
+import { useControlledState } from '@iris/ui/hooks/use-controlled-state';
 import {
   AutoHeight,
   type AutoHeightProps,
-} from '@workspace/ui/components/animate-ui/primitives/effects/auto-height';
+} from '@iris/ui/components/animate-ui/primitives/effects/auto-height';
 
 type TabsContextType = {
   value: string | undefined;

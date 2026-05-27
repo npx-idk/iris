@@ -6,30 +6,30 @@ import { cva, VariantProps } from 'class-variance-authority';
 import { PanelLeftIcon } from 'lucide-react';
 import { type Transition } from 'motion/react';
 
-import { useIsMobile } from '@workspace/ui/hooks/use-mobile';
-import { cn } from '@workspace/ui/lib/utils';
-import { Button } from '@workspace/ui/components/button';
-import { Input } from '@workspace/ui/components/input';
-import { Separator } from '@workspace/ui/components/separator';
-import { Skeleton } from '@workspace/ui/components/skeleton';
+import { useIsMobile } from '@iris/ui/hooks/use-mobile';
+import { cn } from '@iris/ui/lib/utils';
+import { Button } from '@iris/ui/components/button';
+import { Input } from '@iris/ui/components/input';
+import { Separator } from '@iris/ui/components/separator';
+import { Skeleton } from '@iris/ui/components/skeleton';
 import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from '@workspace/ui/components/animate-ui/components/radix/sheet';
+} from '@iris/ui/components/animate-ui/components/radix/sheet';
 import {
   TooltipProvider,
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from '@workspace/ui/components/animate-ui/primitives/radix/tooltip';
+} from '@iris/ui/components/animate-ui/primitives/radix/tooltip';
 import {
   Highlight,
   HighlightItem,
-} from '@workspace/ui/components/animate-ui/primitives/effects/highlight';
-import { getStrictContext } from '@workspace/ui/lib/get-strict-context';
+} from '@iris/ui/components/animate-ui/primitives/effects/highlight';
+import { getStrictContext } from '@iris/ui/lib/get-strict-context';
 
 const SIDEBAR_COOKIE_NAME = 'sidebar_state';
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;

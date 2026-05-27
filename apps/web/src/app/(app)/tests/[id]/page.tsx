@@ -28,23 +28,23 @@ import { useCanvasInput } from '@/hooks/useCanvasInput'
 import { useBrowserNavigation } from '@/hooks/useBrowserNavigation'
 import { useRunExecution } from '@/hooks/useRunExecution'
 import { useStepManagement } from '@/hooks/useStepManagement'
-import { Button } from '@workspace/ui/components/button'
-import { Badge } from '@workspace/ui/components/badge'
-import { Input } from '@workspace/ui/components/input'
-import { Textarea } from '@workspace/ui/components/textarea'
-import { Label } from '@workspace/ui/components/label'
-import { Separator } from '@workspace/ui/components/separator'
-import { SidebarTrigger } from '@workspace/ui/components/sidebar'
+import { Button } from '@iris/ui/components/button'
+import { Badge } from '@iris/ui/components/badge'
+import { Input } from '@iris/ui/components/input'
+import { Textarea } from '@iris/ui/components/textarea'
+import { Label } from '@iris/ui/components/label'
+import { Separator } from '@iris/ui/components/separator'
+import { SidebarTrigger } from '@iris/ui/components/sidebar'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
-} from '@workspace/ui/components/animate-ui/components/radix/dialog'
-import { Switch } from '@workspace/ui/components/animate-ui/components/radix/switch'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@workspace/ui/components/select'
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '@workspace/ui/components/sheet'
-import { Popover, PopoverContent, PopoverTrigger } from '@workspace/ui/components/popover'
-import { Card, CardContent } from '@workspace/ui/components/card'
-import { Skeleton } from '@workspace/ui/components/skeleton'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@workspace/ui/components/tooltip'
+} from '@iris/ui/components/animate-ui/components/radix/dialog'
+import { Switch } from '@iris/ui/components/animate-ui/components/radix/switch'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@iris/ui/components/select'
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '@iris/ui/components/sheet'
+import { Popover, PopoverContent, PopoverTrigger } from '@iris/ui/components/popover'
+import { Card, CardContent } from '@iris/ui/components/card'
+import { Skeleton } from '@iris/ui/components/skeleton'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@iris/ui/components/tooltip'
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -56,9 +56,9 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from '@workspace/ui/components/animate-ui/components/radix/dropdown-menu'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/components/animate-ui/components/radix/tabs'
-import { Toggle } from '@workspace/ui/components/animate-ui/components/radix/toggle'
+} from '@iris/ui/components/animate-ui/components/radix/dropdown-menu'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@iris/ui/components/animate-ui/components/radix/tabs'
+import { Toggle } from '@iris/ui/components/animate-ui/components/radix/toggle'
 import { useTheme } from 'next-themes'
 
 

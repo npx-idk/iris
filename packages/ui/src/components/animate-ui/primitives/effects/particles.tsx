@@ -3,12 +3,12 @@
 import * as React from 'react';
 import { motion, AnimatePresence, type HTMLMotionProps } from 'motion/react';
 
-import { Slot, type WithAsChild } from '@workspace/ui/components/animate-ui/primitives/animate/slot';
+import { Slot, type WithAsChild } from '@iris/ui/components/animate-ui/primitives/animate/slot';
 import {
   useIsInView,
   type UseIsInViewOptions,
-} from '@workspace/ui/hooks/use-is-in-view';
-import { getStrictContext } from '@workspace/ui/lib/get-strict-context';
+} from '@iris/ui/hooks/use-is-in-view';
+import { getStrictContext } from '@iris/ui/lib/get-strict-context';
 
 type Side = 'top' | 'bottom' | 'left' | 'right';
 type Align = 'start' | 'center' | 'end';

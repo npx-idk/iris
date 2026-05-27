@@ -1,12 +1,12 @@
 "use client";
 
-import { Badge } from "@workspace/ui/components/badge";
+import { Badge } from "@iris/ui/components/badge";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@workspace/ui/components/collapsible";
-import { cn } from "@workspace/ui/lib/utils";
+} from "@iris/ui/components/collapsible";
+import { cn } from "@iris/ui/lib/utils";
 import {
   CheckCircle2Icon,
   ChevronRightIcon,

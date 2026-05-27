@@ -6,9 +6,9 @@ import { useSession } from '@/lib/auth-client';
 import { useActiveProject } from '@/hooks/useActiveProject';
 import { NewProjectSheet } from '@/components/projects/NewProjectSheet';
 import { ROUTES } from '@/lib/routes';
-import { Button } from '@workspace/ui/components/button';
-import { Separator } from '@workspace/ui/components/separator';
-import { SidebarTrigger } from '@workspace/ui/components/sidebar';
+import { Button } from '@iris/ui/components/button';
+import { Separator } from '@iris/ui/components/separator';
+import { SidebarTrigger } from '@iris/ui/components/sidebar';
 
 export default function DashboardPage() {
   const { data: session, isPending } = useSession();

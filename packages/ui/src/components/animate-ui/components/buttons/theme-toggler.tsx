@@ -10,9 +10,9 @@ import {
   type ThemeTogglerProps as ThemeTogglerPrimitiveProps,
   type ThemeSelection,
   type Resolved,
-} from '@workspace/ui/components/animate-ui/primitives/effects/theme-toggler';
-import { buttonVariants } from '@workspace/ui/components/animate-ui/components/buttons/icon';
-import { cn } from '@workspace/ui/lib/utils';
+} from '@iris/ui/components/animate-ui/primitives/effects/theme-toggler';
+import { buttonVariants } from '@iris/ui/components/animate-ui/components/buttons/icon';
+import { cn } from '@iris/ui/lib/utils';
 
 const getIcon = (
   effective: ThemeSelection,

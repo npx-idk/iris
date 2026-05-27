@@ -6,17 +6,17 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { api } from '@/lib/api';
 import type { WorkspaceVariable } from '@/lib/types';
-import { Button } from '@workspace/ui/components/animate-ui/components/buttons/button';
-import { Checkbox } from '@workspace/ui/components/animate-ui/components/radix/checkbox';
+import { Button } from '@iris/ui/components/animate-ui/components/buttons/button';
+import { Checkbox } from '@iris/ui/components/animate-ui/components/radix/checkbox';
 import { ConfirmDialog } from '@/components/confirm-dialog';
-import { Input } from '@workspace/ui/components/input';
-import { Badge } from '@workspace/ui/components/badge';
-import { Label } from '@workspace/ui/components/label';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardAction } from '@workspace/ui/components/card';
+import { Input } from '@iris/ui/components/input';
+import { Badge } from '@iris/ui/components/badge';
+import { Label } from '@iris/ui/components/label';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardAction } from '@iris/ui/components/card';
 import {
   Dialog, DialogTrigger, DialogContent, DialogHeader,
   DialogTitle, DialogDescription, DialogFooter, DialogClose,
-} from '@workspace/ui/components/animate-ui/components/radix/dialog';
+} from '@iris/ui/components/animate-ui/components/radix/dialog';
 
 // ─── Edit row ───────────────────────────────────────────────────────────────────
 

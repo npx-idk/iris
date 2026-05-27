@@ -9,19 +9,19 @@ import { ROUTES } from '@/lib/routes';
 import { API_KEY_ROLE_BADGE_VARIANT } from '@/lib/roles';
 import type { ApiKey } from '@/lib/types';
 import { API_KEY_ROLES, type ApiKeyRole } from '@iris/common';
-import { Button } from '@workspace/ui/components/animate-ui/components/buttons/button';
+import { Button } from '@iris/ui/components/animate-ui/components/buttons/button';
 import { ConfirmDialog } from '@/components/confirm-dialog';
-import { Badge } from '@workspace/ui/components/badge';
-import { Input } from '@workspace/ui/components/input';
-import { Card, CardContent, CardHeader, CardTitle, CardAction } from '@workspace/ui/components/card';
+import { Badge } from '@iris/ui/components/badge';
+import { Input } from '@iris/ui/components/input';
+import { Card, CardContent, CardHeader, CardTitle, CardAction } from '@iris/ui/components/card';
 import {
   Dialog, DialogTrigger, DialogContent, DialogHeader,
   DialogTitle, DialogFooter, DialogClose,
-} from '@workspace/ui/components/animate-ui/components/radix/dialog';
+} from '@iris/ui/components/animate-ui/components/radix/dialog';
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent,
   DropdownMenuRadioGroup, DropdownMenuRadioItem,
-} from '@workspace/ui/components/animate-ui/components/radix/dropdown-menu';
+} from '@iris/ui/components/animate-ui/components/radix/dropdown-menu';
 
 const schema = z.object({
   name: z.string().min(1, 'Name is required'),

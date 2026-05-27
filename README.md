@@ -161,11 +161,11 @@ Exit code `0` = all passed, `1` = any failed or cancelled.
 Components live in `packages/ui` and are shared across all apps:
 
 ```bash
-pnpm --filter @workspace/ui dlx shadcn@latest add <component-name>
+pnpm --filter @iris/ui dlx shadcn@latest add <component-name>
 ```
 
 Then import anywhere in the monorepo:
 
 ```tsx
-import { Button } from '@workspace/ui/components/button'
+import { Button } from '@iris/ui/components/button'
 ```

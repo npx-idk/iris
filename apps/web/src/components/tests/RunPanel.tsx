@@ -4,8 +4,8 @@ import { RefObject, useState } from 'react'
 import { TestStep, TestRunStep, RunStatus } from '@/lib/types'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { ArrowDown01Icon, ArrowRight01Icon } from '@hugeicons/core-free-icons'
-import { Badge } from '@workspace/ui/components/badge'
-import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@workspace/ui/components/tooltip'
+import { Badge } from '@iris/ui/components/badge'
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@iris/ui/components/tooltip'
 
 interface RunPanelProps {
   runStatus: RunStatus | null

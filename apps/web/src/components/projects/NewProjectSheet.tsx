@@ -4,13 +4,13 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { api } from '@/lib/api';
-import { Button } from '@workspace/ui/components/button';
-import { Input } from '@workspace/ui/components/input';
-import { Textarea } from '@workspace/ui/components/textarea';
-import { Label } from '@workspace/ui/components/label';
+import { Button } from '@iris/ui/components/button';
+import { Input } from '@iris/ui/components/input';
+import { Textarea } from '@iris/ui/components/textarea';
+import { Label } from '@iris/ui/components/label';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
-} from '@workspace/ui/components/animate-ui/components/radix/dialog';
+} from '@iris/ui/components/animate-ui/components/radix/dialog';
 
 const schema = z.object({
   name: z.string().min(1, 'Name is required'),

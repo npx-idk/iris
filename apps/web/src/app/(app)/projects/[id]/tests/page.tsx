@@ -16,25 +16,25 @@ import {
 import { api } from '@/lib/api'
 import { ROUTES } from '@/lib/routes'
 import { Test, Folder, RunStatus } from '@/lib/types'
-import { Label } from '@workspace/ui/components/label'
-import { Textarea } from '@workspace/ui/components/textarea'
+import { Label } from '@iris/ui/components/label'
+import { Textarea } from '@iris/ui/components/textarea'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
-} from '@workspace/ui/components/animate-ui/components/radix/dialog'
-import { Button } from '@workspace/ui/components/button'
-import { Badge } from '@workspace/ui/components/badge'
-import { Skeleton } from '@workspace/ui/components/skeleton'
-import { Separator } from '@workspace/ui/components/separator'
-import { Input } from '@workspace/ui/components/input'
-import { SidebarTrigger } from '@workspace/ui/components/sidebar'
-import { Checkbox } from '@workspace/ui/components/animate-ui/components/radix/checkbox'
-import { SlidingNumber } from '@workspace/ui/components/animate-ui/primitives/texts/sliding-number'
+} from '@iris/ui/components/animate-ui/components/radix/dialog'
+import { Button } from '@iris/ui/components/button'
+import { Badge } from '@iris/ui/components/badge'
+import { Skeleton } from '@iris/ui/components/skeleton'
+import { Separator } from '@iris/ui/components/separator'
+import { Input } from '@iris/ui/components/input'
+import { SidebarTrigger } from '@iris/ui/components/sidebar'
+import { Checkbox } from '@iris/ui/components/animate-ui/components/radix/checkbox'
+import { SlidingNumber } from '@iris/ui/components/animate-ui/primitives/texts/sliding-number'
 import { GenerateTestsSheet } from '@/components/tests/GenerateTestsSheet'
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent,
   DropdownMenuRadioGroup, DropdownMenuRadioItem,
   DropdownMenuItem,
-} from '@workspace/ui/components/animate-ui/components/radix/dropdown-menu'
+} from '@iris/ui/components/animate-ui/components/radix/dropdown-menu'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 

@@ -13,8 +13,8 @@ import {
   type TabsTriggerProps as TabsTriggerPrimitiveProps,
   type TabsContentProps as TabsContentPrimitiveProps,
   type TabsContentsProps as TabsContentsPrimitiveProps,
-} from '@workspace/ui/components/animate-ui/primitives/radix/tabs';
-import { cn } from '@workspace/ui/lib/utils';
+} from '@iris/ui/components/animate-ui/primitives/radix/tabs';
+import { cn } from '@iris/ui/lib/utils';
 
 type TabsProps = TabsPrimitiveProps;
 

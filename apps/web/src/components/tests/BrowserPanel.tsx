@@ -15,7 +15,7 @@ import { NetworkPanel, type NetworkEntry } from './NetworkPanel'
 import { ConsolePanel, type ConsoleEntry } from './ConsolePanel'
 import { ApplicationPanel } from './ApplicationPanel'
 import { FramePlayer } from './FramePlayer'
-import { Button } from '@workspace/ui/components/animate-ui/components/buttons/button'
+import { Button } from '@iris/ui/components/animate-ui/components/buttons/button'
 
 interface BrowserPanelProps {
   sessionId: string | null

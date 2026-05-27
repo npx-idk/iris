@@ -8,10 +8,10 @@ importers:
 
   .:
     devDependencies:
-      '@workspace/eslint-config':
+      '@iris/eslint-config':
         specifier: workspace:*
         version: link:packages/eslint-config
-      '@workspace/typescript-config':
+      '@iris/typescript-config':
         specifier: workspace:*
         version: link:packages/typescript-config
       prettier:
@@ -90,6 +90,12 @@ importers:
         specifier: ^4.8.3
         version: 4.8.3(bufferutil@4.1.0)
     devDependencies:
+      '@iris/eslint-config':
+        specifier: workspace:*
+        version: link:../../packages/eslint-config
+      '@iris/typescript-config':
+        specifier: workspace:*
+        version: link:../../packages/typescript-config
       '@nestjs/cli':
         specifier: ^11.0.0
         version: 11.0.21(@types/node@22.19.19)(prettier@3.8.1)
@@ -105,12 +111,6 @@ importers:
       '@types/node':
         specifier: ^22.0.0
         version: 22.19.19
-      '@workspace/eslint-config':
-        specifier: workspace:*
-        version: link:../../packages/eslint-config
-      '@workspace/typescript-config':
-        specifier: workspace:*
-        version: link:../../packages/typescript-config
       typescript:
         specifier: 5.9.3
         version: 5.9.3
@@ -144,9 +144,15 @@ importers:
       '@hugeicons/react':
         specifier: ^1.1.6
         version: 1.1.6(react@19.2.4)
+      '@iris/agent':
+        specifier: workspace:^
+        version: link:../../packages/agent
       '@iris/common':
         specifier: workspace:^
         version: link:../../packages/common
+      '@iris/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       '@tanstack/react-query':
         specifier: ^5.100.11
         version: 5.100.11(react@19.2.4)
@@ -159,9 +165,6 @@ importers:
       '@tiptap/starter-kit':
         specifier: ^3.23.6
         version: 3.23.6
-      '@workspace/ui':
-        specifier: workspace:*
-        version: link:../../packages/ui
       '@xyflow/react':
         specifier: ^12.10.2
         version: 12.10.2(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -193,6 +196,12 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
     devDependencies:
+      '@iris/eslint-config':
+        specifier: workspace:^
+        version: link:../../packages/eslint-config
+      '@iris/typescript-config':
+        specifier: workspace:*
+        version: link:../../packages/typescript-config
       '@tailwindcss/postcss':
         specifier: ^4.1.18
         version: 4.1.18
@@ -205,12 +214,6 @@ importers:
       '@types/react-dom':
         specifier: ^19.2.3
         version: 19.2.3(@types/react@19.2.14)
-      '@workspace/eslint-config':
-        specifier: workspace:^
-        version: link:../../packages/eslint-config
-      '@workspace/typescript-config':
-        specifier: workspace:*
-        version: link:../../packages/typescript-config
       eslint:
         specifier: ^9.39.2
         version: 9.39.2(jiti@2.6.1)
@@ -230,12 +233,12 @@ importers:
         specifier: ^3.25.0
         version: 3.25.76
     devDependencies:
+      '@iris/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
       '@types/node':
         specifier: ^22.0.0
         version: 22.19.19
-      '@workspace/typescript-config':
-        specifier: workspace:*
-        version: link:../typescript-config
       typescript:
         specifier: 5.9.3
         version: 5.9.3
@@ -246,12 +249,12 @@ importers:
         specifier: ^12.0.0
         version: 12.1.0
     devDependencies:
+      '@iris/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
       '@types/node':
         specifier: ^22.0.0
         version: 22.19.19
-      '@workspace/typescript-config':
-        specifier: workspace:*
-        version: link:../typescript-config
       tsx:
         specifier: ^4.0.0
         version: 4.21.0
@@ -261,7 +264,7 @@ importers:
 
   packages/common:
     devDependencies:
-      '@workspace/typescript-config':
+      '@iris/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
       typescript:
@@ -274,7 +277,7 @@ importers:
         specifier: ^6.0.0
         version: 6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)
     devDependencies:
-      '@workspace/typescript-config':
+      '@iris/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
       prisma:
@@ -335,12 +338,12 @@ importers:
         specifier: ^1.49.1
         version: 1.60.0
     devDependencies:
+      '@iris/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
       '@types/node':
         specifier: ^22.0.0
         version: 22.19.19
-      '@workspace/typescript-config':
-        specifier: workspace:*
-        version: link:../typescript-config
       typescript:
         specifier: 5.9.3
         version: 5.9.3
@@ -395,6 +398,12 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
     devDependencies:
+      '@iris/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
+      '@iris/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
       '@tailwindcss/postcss':
         specifier: ^4.1.18
         version: 4.1.18
@@ -410,12 +419,6 @@ importers:
       '@types/react-dom':
         specifier: ^19.2.3
         version: 19.2.3(@types/react@19.2.14)
-      '@workspace/eslint-config':
-        specifier: workspace:*
-        version: link:../eslint-config
-      '@workspace/typescript-config':
-        specifier: workspace:*
-        version: link:../typescript-config
       eslint:
         specifier: ^9.39.2
         version: 9.39.2(jiti@2.6.1)

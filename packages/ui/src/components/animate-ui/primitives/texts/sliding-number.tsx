@@ -15,7 +15,7 @@ import useMeasure from 'react-use-measure';
 import {
   useIsInView,
   type UseIsInViewOptions,
-} from '@workspace/ui/hooks/use-is-in-view';
+} from '@iris/ui/hooks/use-is-in-view';
 
 type SlidingNumberRollerProps = {
   prevValue: number;

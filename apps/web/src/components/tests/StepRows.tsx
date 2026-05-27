@@ -11,11 +11,11 @@ import {
 } from '@hugeicons/core-free-icons'
 import { TestStep, TestRunStep, WorkspaceVariable } from '@/lib/types'
 import { SlashCommandMenu } from './SlashCommandMenu'
-import { Test, TestStatus, TestName, TestDuration, TestError, TestErrorMessage } from '@workspace/ui/components/ai-elements/test-results'
+import { Test, TestStatus, TestName, TestDuration, TestError, TestErrorMessage } from '@iris/ui/components/ai-elements/test-results'
 
-import { Button } from '@workspace/ui/components/animate-ui/components/buttons/button'
-import { Badge } from '@workspace/ui/components/badge'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@workspace/ui/components/tooltip'
+import { Button } from '@iris/ui/components/animate-ui/components/buttons/button'
+import { Badge } from '@iris/ui/components/badge'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@iris/ui/components/tooltip'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
 

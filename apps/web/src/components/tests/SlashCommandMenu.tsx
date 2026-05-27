@@ -1,13 +1,14 @@
 'use client'
 
 import { useRef, useState, useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { api } from '@/lib/api'
 import type { WorkspaceVariable } from '@/lib/types'
 import { Textarea } from '@workspace/ui/components/textarea'
-import { Button } from '@workspace/ui/components/button'
+import { Button } from '@workspace/ui/components/animate-ui/components/buttons/button'
+import { Checkbox } from '@workspace/ui/components/animate-ui/components/radix/checkbox'
 import { Input } from '@workspace/ui/components/input'
 import { Label } from '@workspace/ui/components/label'
 import { Badge } from '@workspace/ui/components/badge'
@@ -64,8 +65,8 @@ export function SlashCommandMenu({
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
 
-  const { register, handleSubmit, reset, watch, setError, formState: { errors, isSubmitting } } = useForm<CreateValues>({
-    resolver: zodResolver(createSchema),
+  const { register, handleSubmit, reset, watch, control, setError, formState: { errors, isSubmitting } } = useForm<CreateValues>({
+    resolver: zodResolver(createSchema as any),
     mode: 'onBlur',
     defaultValues: { name: '', value: '', isSecret: false },
   })
@@ -367,7 +368,9 @@ export function SlashCommandMenu({
               {errors.value && <p className="text-xs text-destructive">{errors.value.message}</p>}
             </div>
             <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
-              <input type="checkbox" {...register('isSecret')} className="accent-primary" />
+              <Controller control={control} name="isSecret" render={({ field }) => (
+                <Checkbox size="sm" checked={field.value} onCheckedChange={field.onChange} />
+              )} />
               Mark as secret
             </label>
             {errors.root && <p className="text-xs text-destructive">{errors.root.message}</p>}

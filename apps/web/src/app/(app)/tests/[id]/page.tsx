@@ -1,9 +1,18 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { useQuery } from '@tanstack/react-query'
+
+const ReportSheet = dynamic(
+  () => import('@/components/tests/ReportSheet').then((mod) => mod.ReportSheet),
+  { ssr: false }
+)
 import { api } from '@/lib/api'
 import { TestWithSteps, BrowserTab, RunStatus, TestRun, TestRunStep, BrowserEventLog, WorkspaceVariable } from '@/lib/types'
 import { ROUTES } from '@/lib/routes'
@@ -21,20 +30,54 @@ import { useRunExecution } from '@/hooks/useRunExecution'
 import { useStepManagement } from '@/hooks/useStepManagement'
 import { Button } from '@workspace/ui/components/button'
 import { Badge } from '@workspace/ui/components/badge'
+import { Input } from '@workspace/ui/components/input'
+import { Textarea } from '@workspace/ui/components/textarea'
 import { Label } from '@workspace/ui/components/label'
 import { Separator } from '@workspace/ui/components/separator'
 import { SidebarTrigger } from '@workspace/ui/components/sidebar'
-import { Switch } from '@workspace/ui/components/switch'
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from '@workspace/ui/components/animate-ui/components/radix/dialog'
+import { Switch } from '@workspace/ui/components/animate-ui/components/radix/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@workspace/ui/components/select'
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '@workspace/ui/components/sheet'
+import { Popover, PopoverContent, PopoverTrigger } from '@workspace/ui/components/popover'
+import { Card, CardContent } from '@workspace/ui/components/card'
+import { Skeleton } from '@workspace/ui/components/skeleton'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@workspace/ui/components/tooltip'
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from '@workspace/ui/components/animate-ui/components/radix/dropdown-menu'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/components/animate-ui/components/radix/tabs'
+import { Toggle } from '@workspace/ui/components/animate-ui/components/radix/toggle'
+import { useTheme } from 'next-themes'
+
+
 
 type Tab = 'steps' | 'prerequisites'
 
 export default function TestPage() {
   const { id: testId } = useParams<{ id: string }>()
+  const { resolvedTheme } = useTheme()
 
   const { data: test, refetch } = useQuery({
     queryKey: ['test', testId],
     queryFn: () => api.get<TestWithSteps>(`/tests/${testId}`),
+  })
+
+  const { data: project } = useQuery({
+    queryKey: ['project', test?.projectId],
+    queryFn: () => api.get<any>(`/projects/${test?.projectId}`),
+    enabled: !!test?.projectId,
   })
 
   const { data: workspaceVariables = [], refetch: refetchVariables } = useQuery({
@@ -301,6 +344,44 @@ export default function TestPage() {
     refetch()
   }
 
+  const [editOpen, setEditOpen] = useState(false)
+  const editSchema = z.object({
+    name: z.string().min(1, 'Name is required'),
+    description: z.string().optional(),
+    startUrl: z.string()
+      .refine((v) => !v || /^https?:\/\/.+/.test(v), 'Enter a valid URL')
+      .optional(),
+    tags: z.string().optional(),
+  })
+  type EditValues = z.infer<typeof editSchema>
+  const editForm = useForm<EditValues>({
+    resolver: zodResolver(editSchema as any),
+    mode: 'onBlur',
+  })
+
+  function openEdit() {
+    if (!test) return
+    editForm.reset({
+      name: test.name,
+      description: test.description ?? '',
+      startUrl: test.startUrl ?? '',
+      tags: test.tags?.join(', ') ?? '',
+    })
+    setEditOpen(true)
+  }
+
+  async function handleEditSubmit(values: EditValues) {
+    const tags = values.tags?.split(',').map((t) => t.trim()).filter(Boolean) ?? []
+    await api.patch(`/tests/${testId}`, {
+      name: values.name,
+      description: values.description || null,
+      startUrl: values.startUrl || null,
+      tags,
+    })
+    setEditOpen(false)
+    refetch()
+  }
+
   async function handleRunTest() {
     if (sessionIdRef.current) {
       api.delete(`/author/${sessionIdRef.current}`).catch(() => {})
@@ -318,6 +399,11 @@ export default function TestPage() {
       setLaunching(false)
     }
   }
+
+  const [reportOpen, setReportOpen] = useState(false)
+  const activeRun = selectedRunId ? selectedRunDetails : lastRunDetails
+
+
 
   // ── Derived state ────────────────────────────────────────────────────────────
 
@@ -358,24 +444,32 @@ export default function TestPage() {
   // ── Render ───────────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden">
+    <div className="flex flex-col h-screen w-full min-w-0 overflow-hidden">
       <header className="flex h-12 shrink-0 items-center gap-2 border-b border-border px-4">
         <SidebarTrigger className="-ml-1" />
         <Separator orientation="vertical" className="mr-2 h-4" />
-        <nav className="flex items-center gap-2 text-xs text-muted-foreground">
+        <nav className="flex items-center gap-2 text-xs text-muted-foreground min-w-0">
           {test && (
             <>
-              <Link href={ROUTES.projectTests(test.projectId)} className="hover:text-foreground transition-colors">Tests</Link>
-              <span>/</span>
+              <Link href={ROUTES.projectTests(test.projectId)} className="hover:text-foreground transition-colors shrink-0">Tests</Link>
+              <span className="shrink-0">/</span>
             </>
           )}
-          <span className="text-foreground font-medium">{test?.name ?? '…'}</span>
-          {test && !test.enabled && <Badge variant="outline" className="text-xs text-muted-foreground">disabled</Badge>}
+          <span className="text-foreground font-medium truncate">{test?.name ?? '…'}</span>
+          {test && !test.enabled && <Badge variant="outline" className="text-xs text-muted-foreground shrink-0">disabled</Badge>}
+          {test && (
+            <button
+              onClick={openEdit}
+              className="text-muted-foreground hover:text-foreground transition-colors text-xs px-1.5 py-0.5 rounded hover:bg-muted shrink-0"
+            >
+              Edit
+            </button>
+          )}
         </nav>
       </header>
 
       {/* ── Toolbar ──────────────────────────────────────────────────────────── */}
-      <div className="flex items-center gap-2 px-4 py-2 border-b border-border bg-card shrink-0 flex-wrap">
+      <div className="flex items-center gap-2 px-4 py-2 border-b border-border bg-card/80 backdrop-blur shadow-sm relative z-10 shrink-0 flex-wrap">
         {/* Left: run selector */}
         <div className="flex items-center gap-2 flex-1 min-w-0">
           {allRuns.length > 0 && !run.runMode && (
@@ -383,7 +477,7 @@ export default function TestPage() {
               value={selectedRunId ?? 'latest'}
               onValueChange={(v) => setSelectedRunId(v === 'latest' ? null : v)}
             >
-              <SelectTrigger className="h-7 text-xs w-44">
+              <SelectTrigger className="">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -406,13 +500,13 @@ export default function TestPage() {
 
           {/* Run progress */}
           {run.runMode && (run.runStatus === 'RUNNING' || run.runStatus === 'QUEUED') && (
-            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1.5 text-xs text-muted-foreground shrink-0">
               <span className="w-3 h-3 border-2 border-muted-foreground border-t-transparent rounded-full animate-spin" />
               Running…
             </span>
           )}
           {run.runMode && run.runStatus && run.runStatus !== 'RUNNING' && run.runStatus !== 'QUEUED' && (
-            <span className="flex items-center gap-2">
+            <span className="flex items-center gap-2 shrink-0">
               <span className="text-xs text-muted-foreground">{passedCount}/{run.runSteps.length} passed</span>
               <Badge variant={run.runStatus === 'PASSED' ? 'secondary' : 'destructive'} className="text-xs">{run.runStatus}</Badge>
             </span>
@@ -420,13 +514,13 @@ export default function TestPage() {
 
           {/* Author session status */}
           {!run.runMode && isBusy && statusLabel && (
-            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1.5 text-xs text-muted-foreground shrink-0">
               <span className="w-3 h-3 border-2 border-muted-foreground border-t-transparent rounded-full animate-spin" />
               {statusLabel}
             </span>
           )}
           {!run.runMode && isReady && (
-            <span className="flex items-center gap-1.5 text-xs text-primary">
+            <span className="flex items-center gap-1.5 text-xs text-primary shrink-0">
               <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
               Live
             </span>
@@ -445,7 +539,6 @@ export default function TestPage() {
             <div className="flex items-center gap-2">
               <Switch
                 id="continue-on-failure"
-                size="sm"
                 checked={test?.continueOnFailure ?? false}
                 onCheckedChange={handleToggleContinueOnFailure}
               />
@@ -454,7 +547,18 @@ export default function TestPage() {
               </Label>
             </div>
           )}
-          <Button onClick={handleRunTest} disabled={run.runMode || launching || !test?.enabled || existingSteps.length === 0} size="sm">
+          {activeRunId && (
+            <Button variant="outline" size="sm" onClick={() => setReportOpen(true)}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1.5 h-3.5 w-3.5"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+              Report
+            </Button>
+          )}
+          <Button 
+            onClick={handleRunTest} 
+            disabled={run.runMode || launching || !test?.enabled || existingSteps.length === 0} 
+            size="sm"
+            className="bg-blue-600 hover:bg-blue-700 text-white border-transparent"
+          >
             {launching ? 'Starting…' : '▶ Run test'}
           </Button>
         </div>
@@ -464,7 +568,7 @@ export default function TestPage() {
       {selectedRunId && selectedRunId !== lastRunId && !run.runMode && (
         <div className="flex items-center gap-3 px-4 py-2 bg-muted/40 border-b border-border shrink-0">
           <span className="w-2 h-2 rounded-full bg-muted-foreground/50 shrink-0" />
-          <span className="text-xs text-muted-foreground flex-1">
+          <span className="text-xs text-muted-foreground flex-1 min-w-0 truncate">
             Viewing run from {selectedRunDetails ? new Date(selectedRunDetails.createdAt).toLocaleString() : '…'}
             {selectedRunDetails && (
               <> · <span className={selectedRunDetails.status === 'PASSED' ? 'text-green-600' : 'text-destructive'}>{selectedRunDetails.status}</span> · {selectedRunDetails.passedSteps}/{selectedRunDetails.totalSteps} steps</>
@@ -472,14 +576,14 @@ export default function TestPage() {
           </span>
           <button
             onClick={() => setSelectedRunId(null)}
-            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors shrink-0"
           >
             ✕ Back to latest
           </button>
         </div>
       )}
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden min-w-0">
         {/* Left panel */}
         <div className="flex flex-col w-[460px] shrink-0 border-r border-border">
           <div className="flex border-b border-border px-4 shrink-0">
@@ -574,6 +678,59 @@ export default function TestPage() {
           runEvents={runEvents ?? null}
         />
       </div>
+
+      <Dialog open={editOpen} onOpenChange={(o) => { if (!o) editForm.reset(); setEditOpen(o) }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit test</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={editForm.handleSubmit(handleEditSubmit)} className="flex flex-col gap-4 py-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="et-name">Name <span className="text-destructive">*</span></Label>
+              <Input id="et-name" {...editForm.register('name')} />
+              {editForm.formState.errors.name && (
+                <p className="text-xs text-destructive">{editForm.formState.errors.name.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="et-desc">Description <span className="text-muted-foreground font-normal">(optional)</span></Label>
+              <Textarea id="et-desc" placeholder="What does this test verify?" {...editForm.register('description')} />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="et-url">Start URL <span className="text-muted-foreground font-normal">(optional)</span></Label>
+              <Input id="et-url" placeholder="https://example.com/login" {...editForm.register('startUrl')} />
+              {editForm.formState.errors.startUrl && (
+                <p className="text-xs text-destructive">{editForm.formState.errors.startUrl.message}</p>
+              )}
+              <p className="text-xs text-muted-foreground">Overrides the project base URL for this test</p>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="et-tags">Tags <span className="text-muted-foreground font-normal">(optional)</span></Label>
+              <Input id="et-tags" placeholder="smoke, auth, critical" {...editForm.register('tags')} />
+              <p className="text-xs text-muted-foreground">Comma-separated</p>
+            </div>
+
+            <DialogFooter>
+              <Button type="button" variant="ghost" onClick={() => setEditOpen(false)}>Cancel</Button>
+              <Button type="submit" disabled={editForm.formState.isSubmitting}>
+                {editForm.formState.isSubmitting ? 'Saving…' : 'Save changes'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <ReportSheet
+        isOpen={reportOpen}
+        onOpenChange={setReportOpen}
+        test={test}
+        activeRun={activeRun}
+        resolvedTheme={resolvedTheme}
+        project={project}
+      />
     </div>
   )
 }

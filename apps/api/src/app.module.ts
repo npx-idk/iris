@@ -12,7 +12,8 @@ import { AuthoringModule } from './author/author.module'
 import { CiModule } from './ci/ci.module'
 import { WorkspaceModule } from './workspace/workspace.module'
 import { ExploreModule } from './explore/explore.module'
-import { GroupsModule } from './groups/groups.module'
+import { FoldersModule } from './folders/folders.module'
+import { FlowsModule } from './flows/flows.module'
 
 @Module({
   imports: [
@@ -31,7 +32,8 @@ import { GroupsModule } from './groups/groups.module'
     CiModule,
     WorkspaceModule,
     ExploreModule,
-    GroupsModule,
+    FoldersModule,
+    FlowsModule,
   ],
 })
 export class AppModule {}

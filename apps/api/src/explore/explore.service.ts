@@ -26,18 +26,19 @@ export class ExploreService {
       }
     }
 
-    // Fetch workspace variables for interpolating {{tokens}} in prereq steps
-    const workspaceMember = await prisma.workspaceMember.findFirst({
-      where: { userId },
-      include: {
-        workspace: {
-          include: { variables: true },
-        },
-      },
-    })
+    // Fetch workspace variables only when needed for {{token}} interpolation in prereq steps
     const variables: Record<string, string> = {}
-    for (const v of workspaceMember?.workspace.variables ?? []) {
-      variables[v.name] = v.value
+    if (prerequisite) {
+      const project = await prisma.project.findUnique({
+        where: { id: projectId },
+        select: { workspaceId: true },
+      })
+      if (project) {
+        const workspaceVars = await prisma.workspaceVariable.findMany({
+          where: { workspaceId: project.workspaceId },
+        })
+        for (const v of workspaceVars) variables[v.name] = v.value
+      }
     }
 
     return explorePage({

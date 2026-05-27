@@ -17,6 +17,11 @@ import { ImportSuiteDto } from './dto/import-suite.dto'
 export class TestsController {
   constructor(private readonly tests: TestsService) {}
 
+  @Get('tests')
+  findAllForUser(@CurrentUser() user: any) {
+    return this.tests.findAllForUser(user.id)
+  }
+
   @Get('projects/:projectId/tests')
   findAll(@CurrentUser() user: any, @Param('projectId') projectId: string) {
     return this.tests.findAll(projectId, user.id)

@@ -3,10 +3,12 @@ export const ROUTES = {
   login: '/login',
   signup: '/signup',
   dashboard: '/dashboard',
-  projectNew: '/projects/new',
   project: (id: string) => `/projects/${id}`,
   projectTests: (id: string) => `/projects/${id}/tests`,
   projectTestNew: (id: string) => `/projects/${id}/tests/new`,
+  projectFlows: (id: string) => `/projects/${id}/flows`,
+  projectFlow: (projectId: string, flowId: string) => `/projects/${projectId}/flows/${flowId}`,
   test: (id: string) => `/tests/${id}`,
   variables: '/variables',
+  runs: '/runs',
 } as const;

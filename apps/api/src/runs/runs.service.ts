@@ -1,19 +1,56 @@
 import {
   Injectable, NotFoundException, ForbiddenException, BadRequestException,
 } from '@nestjs/common'
+import { EventEmitter2 } from '@nestjs/event-emitter'
 import { prisma } from '../prisma/prisma'
 import { QueueService } from '../queue/queue.service'
 import { ArtifactsService } from '../common/artifacts.service'
+import { FlowsService } from '../flows/flows.service'
 import { topologicalSort } from '../tests/prerequisite.util'
+
+const WORKSPACE_RUN_EVENT = 'workspace.run.changed'
 
 @Injectable()
 export class RunsService {
   constructor(
     private queue: QueueService,
     private artifacts: ArtifactsService,
+    private eventEmitter: EventEmitter2,
+    private flows: FlowsService,
   ) {}
 
-  async triggerTest(testId: string, userId: string, trigger: 'MANUAL' | 'API' = 'MANUAL', apiKeyProjectId?: string) {
+  emitRunChanged(payload: {
+    id: string
+    status: string
+    createdAt: Date | string
+    testId: string
+    testName: string
+    projectId: string
+    projectName: string
+  }) {
+    this.eventEmitter.emit(WORKSPACE_RUN_EVENT, {
+      id: payload.id,
+      status: payload.status,
+      createdAt: payload.createdAt instanceof Date
+        ? payload.createdAt.toISOString()
+        : payload.createdAt,
+      test: {
+        id: payload.testId,
+        name: payload.testName,
+        project: { id: payload.projectId, name: payload.projectName },
+      },
+    })
+  }
+
+  async getUserProjectIds(userId: string): Promise<string[]> {
+    const memberships = await prisma.projectMember.findMany({
+      where: { userId },
+      select: { projectId: true },
+    })
+    return memberships.map((m) => m.projectId)
+  }
+
+  async triggerTest(testId: string, userId: string, trigger: 'MANUAL' | 'API' = 'MANUAL', apiKeyProjectId?: string, skipPrerequisites = false) {
     const test = await prisma.test.findUnique({
       where: { id: testId },
       include: {
@@ -40,18 +77,30 @@ export class RunsService {
 
     const projectRunId = `pr_${Date.now()}`
 
-    // Create run records for prerequisites (visible in UI) but don't enqueue separate jobs —
-    // the main test's job runs them inline in order.
+    // When skipPrerequisites=true (e.g. flow execution), pass empty array so the
+    // processor skips the prereq phase — the flow connects tests manually instead.
     const prerequisiteRunIds: string[] = []
-    for (const prereq of test.prerequisites) {
-      const run = await prisma.testRun.create({
-        data: { testId: prereq.id, status: 'QUEUED', trigger, projectRunId },
-      })
-      prerequisiteRunIds.push(run.id)
+    if (!skipPrerequisites) {
+      for (const prereq of test.prerequisites) {
+        const run = await prisma.testRun.create({
+          data: { testId: prereq.id, status: 'QUEUED', trigger, projectRunId },
+        })
+        prerequisiteRunIds.push(run.id)
+      }
     }
 
     const run = await prisma.testRun.create({
       data: { testId: test.id, status: 'QUEUED', trigger, projectRunId },
+    })
+
+    this.emitRunChanged({
+      id: run.id,
+      status: 'QUEUED',
+      createdAt: run.createdAt,
+      testId: test.id,
+      testName: test.name,
+      projectId: test.projectId,
+      projectName: test.project.name,
     })
 
     await this.queue.enqueueRun({
@@ -71,6 +120,7 @@ export class RunsService {
     if (!member) throw new ForbiddenException('Not a project member')
     if (member.role === 'VIEWER') throw new ForbiddenException()
 
+    const project = await prisma.project.findUnique({ where: { id: projectId }, select: { name: true } })
     const tests = await prisma.test.findMany({
       where: { projectId, enabled: true },
       include: {
@@ -111,6 +161,16 @@ export class RunsService {
 
       runIdByTestId.set(testId, run.id)
       primaryRunIds.push(run.id)
+
+      this.emitRunChanged({
+        id: run.id,
+        status: 'QUEUED',
+        createdAt: run.createdAt,
+        testId,
+        testName: test.name,
+        projectId,
+        projectName: project?.name ?? '',
+      })
 
       await this.queue.enqueueRun({
         runId: run.id,
@@ -182,6 +242,28 @@ export class RunsService {
     return this.artifacts.getBrowserEvents(runId)
   }
 
+  async findActive(userId: string) {
+    const projectIds = await this.getUserProjectIds(userId)
+
+    return prisma.testRun.findMany({
+      where: {
+        status: { in: ['QUEUED', 'RUNNING'] },
+        test: { projectId: { in: projectIds } },
+      },
+      include: {
+        test: {
+          select: {
+            id: true,
+            name: true,
+            project: { select: { id: true, name: true } },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 20,
+    })
+  }
+
   async cancel(runId: string, userId: string) {
     const run = await this.findOne(runId, userId)
     if (!['QUEUED', 'RUNNING'].includes(run.status)) {
@@ -191,5 +273,74 @@ export class RunsService {
       where: { id: runId },
       data: { status: 'CANCELLED', finishedAt: new Date() },
     })
+    this.emitRunChanged({
+      id: runId,
+      status: 'CANCELLED',
+      createdAt: run.createdAt,
+      testId: run.test.id,
+      testName: run.test.name,
+      projectId: run.test.project.id,
+      projectName: run.test.project.name,
+    })
+  }
+
+  async triggerFlow(flowId: string, userId: string) {
+    const { order } = await this.flows.getRunOrder(flowId, userId)
+
+    const flow = await prisma.flow.findUnique({
+      where: { id: flowId },
+      include: { project: true },
+    })
+    if (!flow) throw new NotFoundException('Flow not found')
+
+    const member = await prisma.projectMember.findUnique({
+      where: { userId_projectId: { userId, projectId: flow.projectId } },
+    })
+    if (!member) throw new ForbiddenException('Not a project member')
+    if (member.role === 'VIEWER') throw new ForbiddenException('Viewers cannot trigger runs')
+
+    const projectRunId = `flow_${flowId}_${Date.now()}`
+
+    const runNodeMap: { nodeId: string; runId: string }[] = []
+    const flowRunIds: string[] = []
+
+    for (const { nodeId, testId } of order) {
+      const run = await prisma.testRun.create({
+        data: {
+          testId,
+          status: 'QUEUED',
+          trigger: 'MANUAL',
+          projectRunId,
+        },
+      })
+      flowRunIds.push(run.id)
+      runNodeMap.push({ nodeId, runId: run.id })
+
+      const test = await prisma.test.findUnique({
+        where: { id: testId },
+        include: { project: true },
+      })
+
+      if (test) {
+        this.emitRunChanged({
+          id: run.id,
+          status: 'QUEUED',
+          createdAt: run.createdAt,
+          testId,
+          testName: test.name,
+          projectId: flow.projectId,
+          projectName: test.project.name,
+        })
+      }
+    }
+
+    await this.queue.enqueueRun({
+      runId: flowRunIds[0]!,
+      testId: order[0]!.testId,
+      projectRunId,
+      flowRunIds,
+    })
+
+    return { runs: runNodeMap }
   }
 }

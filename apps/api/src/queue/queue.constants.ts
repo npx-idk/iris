@@ -5,4 +5,5 @@ export interface RunJobPayload {
   testId: string
   projectRunId?: string
   prerequisiteRunIds?: string[]
+  flowRunIds?: string[]
 }

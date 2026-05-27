@@ -28,13 +28,13 @@ import {
 import { Separator } from '@workspace/ui/components/separator';
 import { SidebarTrigger } from '@workspace/ui/components/sidebar';
 
-type Tab = 'overview' | 'members' | 'api-keys' | 'settings';
+type Tab = 'dashboard' | 'members' | 'api-keys' | 'settings';
 
 export default function ProjectPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { data: session } = useSession();
-  const [tab, setTab] = useState<Tab>('overview');
+  const [tab, setTab] = useState<Tab>('dashboard');
 
   const {
     data: project,
@@ -72,7 +72,7 @@ export default function ProjectPage() {
   }
 
   const tabs: { key: Tab; label: string; show: boolean }[] = [
-    { key: 'overview', label: 'Overview', show: true },
+    { key: 'dashboard', label: 'Dashboard', show: true },
     { key: 'members', label: `Members (${project.members.length})`, show: true },
     { key: 'api-keys', label: 'API Keys', show: !!canManage },
     { key: 'settings', label: 'Settings', show: !!canManage },
@@ -84,18 +84,7 @@ export default function ProjectPage() {
       <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-4">
         <SidebarTrigger className="-ml-1" />
         <Separator orientation="vertical" className="mr-2 h-4" />
-        <nav className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Link href={ROUTES.dashboard} className="hover:text-foreground transition-colors">
-            Projects
-          </Link>
-          <span>/</span>
-          <span className="text-foreground font-medium">{project.name}</span>
-        </nav>
-        <div className="ml-auto">
-          <Button asChild size="sm">
-            <Link href={ROUTES.projectTestNew(id)}>+ New test</Link>
-          </Button>
-        </div>
+        <span className="text-sm font-medium text-foreground">{project.name} — Settings</span>
       </header>
 
       <div className="flex gap-0 border-b border-border px-4">
@@ -115,7 +104,7 @@ export default function ProjectPage() {
       </div>
 
       <div className="p-6">
-        {tab === 'overview' && (
+        {tab === 'dashboard' && (
           <Card>
             <CardHeader>
               <CardTitle>Project details</CardTitle>
@@ -203,7 +192,7 @@ function ProjectSettings({
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const { register, handleSubmit, reset, setError, formState: { errors, isSubmitting } } = useForm<SettingsValues>({
-    resolver: zodResolver(settingsSchema),
+    resolver: zodResolver(settingsSchema as any),
     mode: 'onBlur',
     defaultValues: { name: project.name, baseUrl: project.baseUrl, description: project.description ?? '' },
   });

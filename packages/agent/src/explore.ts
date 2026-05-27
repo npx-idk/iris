@@ -68,7 +68,13 @@ export async function explorePage(config: ExploreConfig): Promise<ExploreResult>
       }
       for (const step of config.prerequisite.steps) {
         const instruction = interpolateVars(step.instruction, config.variables ?? {})
-        await executeStep(stagehand, instruction).catch(() => {})
+        const result = await executeStep(stagehand, instruction)
+        if (!result.success) {
+          throw new Error(
+            `Prerequisite step failed: "${instruction}"` +
+            (result.message ? ` — ${result.message}` : ''),
+          )
+        }
       }
       // Let post-login navigation settle before continuing
       await new Promise((r) => setTimeout(r, 1500))

@@ -10,12 +10,12 @@ export interface TestPrerequisite {
   steps: TestStep[]
 }
 
-export interface TestGroup {
+export interface Folder {
   id: string
   name: string
+  parentId: string | null
   order: number
   createdAt: string
-  _count?: { tests: number }
 }
 
 export interface Test {
@@ -28,8 +28,8 @@ export interface Test {
   order: number
   tags: string[]
   projectId: string
-  groupId?: string | null
-  group?: { id: string; name: string } | null
+  folderId?: string | null
+  folder?: { id: string; name: string; parentId: string | null } | null
   prerequisites: TestPrerequisite[]
   createdAt: string
   updatedAt: string
@@ -112,6 +112,47 @@ export interface WorkspaceVariable {
   isSecret: boolean
   createdAt: string
   updatedAt: string
+}
+
+export interface Flow {
+  id: string
+  name: string
+  nodes: FlowNode[]
+  edges: FlowEdge[]
+  createdAt: string
+  updatedAt: string
+}
+
+export interface FlowSummary {
+  id: string
+  name: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface FlowNode {
+  id: string
+  type: string
+  position: { x: number; y: number }
+  data: Record<string, unknown>
+}
+
+export interface FlowEdge {
+  id: string
+  source: string
+  target: string
+  animated?: boolean
+}
+
+export interface ActiveRun {
+  id: string
+  status: RunStatus
+  createdAt: string
+  test: {
+    id: string
+    name: string
+    project: { id: string; name: string }
+  }
 }
 
 export interface TestRunStep {

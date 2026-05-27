@@ -32,6 +32,29 @@ export class TestsService {
     return test
   }
 
+  async findAllForUser(userId: string) {
+    const memberships = await prisma.projectMember.findMany({
+      where: { userId },
+      select: { projectId: true },
+    })
+    const projectIds = memberships.map((m) => m.projectId)
+
+    return prisma.test.findMany({
+      where: { projectId: { in: projectIds } },
+      include: {
+        _count: { select: { steps: true, runs: true } },
+        runs: {
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+          select: { id: true, status: true, createdAt: true },
+        },
+        folder: { select: { id: true, name: true, parentId: true } },
+        project: { select: { id: true, name: true } },
+      },
+      orderBy: [{ projectId: 'asc' }, { order: 'asc' }],
+    })
+  }
+
   async findAll(projectId: string, userId: string) {
     await this.verifyProjectAccess(projectId, userId)
 
@@ -47,7 +70,7 @@ export class TestsService {
         prerequisites: {
           select: { id: true, name: true },
         },
-        group: { select: { id: true, name: true } },
+        folder: { select: { id: true, name: true, parentId: true } },
       },
       orderBy: { order: 'asc' },
     })
@@ -103,7 +126,16 @@ export class TestsService {
   }
 
   async update(testId: string, userId: string, dto: UpdateTestDto) {
-    await this.getTestAndVerify(testId, userId, true)
+    const test = await this.getTestAndVerify(testId, userId, true)
+
+    if (dto.folderId != null) {
+      const folder = await prisma.folder.findUnique({ where: { id: dto.folderId } })
+      if (!folder) throw new NotFoundException('Folder not found')
+      if (folder.projectId !== test.projectId) {
+        throw new BadRequestException('Folder does not belong to this project')
+      }
+    }
+
     return prisma.test.update({ where: { id: testId }, data: dto })
   }
 

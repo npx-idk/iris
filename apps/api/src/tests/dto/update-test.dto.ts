@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsBoolean, IsArray, ValidateIf } from 'class-validator'
+import { IsString, IsOptional, IsBoolean, IsArray } from 'class-validator'
 
 export class UpdateTestDto {
   @IsOptional()
@@ -27,7 +27,6 @@ export class UpdateTestDto {
   continueOnFailure?: boolean
 
   @IsOptional()
-  @ValidateIf((o) => o.groupId !== null)
   @IsString()
-  groupId?: string | null
+  folderId?: string | null
 }

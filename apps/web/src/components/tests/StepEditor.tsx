@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { TestStep } from '@/lib/types'
-import { Button } from '@workspace/ui/components/button'
+import { Button } from '@workspace/ui/components/animate-ui/components/buttons/button'
 import { Input } from '@workspace/ui/components/input'
 import { Textarea } from '@workspace/ui/components/textarea'
 

@@ -22,7 +22,7 @@ export interface NetworkEntry {
 function methodColor(method: string) {
   const m = method.toUpperCase()
   if (m === 'GET')    return 'text-blue-500 dark:text-blue-400'
-  if (m === 'POST')   return 'text-green-500 dark:text-green-400'
+  if (m === 'POST')   return 'text-emerald-500 dark:text-emerald-400'
   if (m === 'PUT' || m === 'PATCH') return 'text-yellow-500 dark:text-yellow-400'
   if (m === 'DELETE') return 'text-destructive'
   return 'text-muted-foreground'
@@ -30,7 +30,7 @@ function methodColor(method: string) {
 
 function statusColor(status?: number) {
   if (!status) return 'text-muted-foreground'
-  if (status < 300) return 'text-green-500 dark:text-green-400'
+  if (status < 300) return 'text-emerald-500 dark:text-emerald-400'
   if (status < 400) return 'text-yellow-500 dark:text-yellow-400'
   return 'text-destructive'
 }
@@ -64,10 +64,10 @@ function NetworkEntryRow({ entry }: { entry: NetworkEntry }) {
   const [expanded, setExpanded] = useState(false)
 
   return (
-    <div className="border-b border-border/40">
+    <div className="border-b border-border/40 even:bg-muted/20">
       <button
         onClick={() => setExpanded((e) => !e)}
-        className="w-full flex items-center gap-3 px-3 py-1.5 hover:bg-muted/40 transition-colors text-left"
+        className="w-full flex items-center gap-3 px-3 py-2 hover:bg-muted/40 transition-colors text-left"
       >
         <span className={`shrink-0 w-14 text-[11px] font-bold ${methodColor(entry.method)}`}>{entry.method}</span>
         <span className="flex-1 truncate font-mono text-[11px]">{urlPath(entry.url)}</span>

@@ -4,7 +4,9 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import type { Test } from '@/lib/types'
-import { Button } from '@workspace/ui/components/button'
+import type { ExploreResult, GeneratedTest } from '@iris/agent'
+import { Button } from '@workspace/ui/components/animate-ui/components/buttons/button'
+import { Checkbox } from '@workspace/ui/components/animate-ui/components/radix/checkbox'
 import { Input } from '@workspace/ui/components/input'
 import { Textarea } from '@workspace/ui/components/textarea'
 import { Label } from '@workspace/ui/components/label'
@@ -12,23 +14,10 @@ import { Badge } from '@workspace/ui/components/badge'
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
 } from '@workspace/ui/components/sheet'
-
-interface GeneratedStep {
-  stepIndex: number
-  instruction: string
-}
-
-interface GeneratedTest {
-  name: string
-  description: string
-  startUrl: string
-  steps: GeneratedStep[]
-}
-
-interface ExploreResult {
-  pagePurpose: string
-  tests: GeneratedTest[]
-}
+import {
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent,
+  DropdownMenuRadioGroup, DropdownMenuRadioItem,
+} from '@workspace/ui/components/animate-ui/components/radix/dropdown-menu'
 
 type Phase = 'input' | 'loading' | 'review'
 
@@ -105,6 +94,8 @@ export function GenerateTestsSheet({ open, onOpenChange, projectId, defaultUrl, 
       await api.post(`/projects/${projectId}/import`, { tests: testsToSave })
       onSaved()
       onOpenChange(false)
+    } catch (err: any) {
+      setError(err.message ?? 'Failed to save tests')
     } finally {
       setSaving(false)
     }
@@ -147,17 +138,23 @@ export function GenerateTestsSheet({ open, onOpenChange, projectId, defaultUrl, 
                 Prerequisite test{' '}
                 <span className="text-muted-foreground font-normal">(optional — for pages that require login)</span>
               </Label>
-              <select
-                id="gen-prereq"
-                value={prerequisiteTestId}
-                onChange={(e) => setPrerequisiteTestId(e.target.value)}
-                className="w-full h-9 rounded-md border border-input bg-card px-3 text-xs text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
-              >
-                <option value="">None — page is public</option>
-                {tests.map((t) => (
-                  <option key={t.id} value={t.id}>{t.name}</option>
-                ))}
-              </select>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="w-full justify-start font-normal text-xs">
+                    {prerequisiteTestId
+                      ? (tests.find((t) => t.id === prerequisiteTestId)?.name ?? 'Unknown test')
+                      : 'None — page is public'}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-72">
+                  <DropdownMenuRadioGroup value={prerequisiteTestId} onValueChange={setPrerequisiteTestId}>
+                    <DropdownMenuRadioItem value="">None — page is public</DropdownMenuRadioItem>
+                    {tests.map((t) => (
+                      <DropdownMenuRadioItem key={t.id} value={t.id}>{t.name}</DropdownMenuRadioItem>
+                    ))}
+                  </DropdownMenuRadioGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
               {selectedPrereq && (
                 <p className="text-xs text-muted-foreground mt-1">
                   AI will run <span className="font-medium text-foreground">{selectedPrereq.name}</span> first
@@ -223,6 +220,8 @@ export function GenerateTestsSheet({ open, onOpenChange, projectId, defaultUrl, 
               ))}
             </div>
 
+            {error && <p className="text-xs text-destructive">{error}</p>}
+
             <div className="flex items-center justify-between pt-2">
               <Button variant="ghost" size="sm" onClick={() => setPhase('input')}>
                 ← Back
@@ -251,12 +250,12 @@ function TestReviewRow({
     <div className={`rounded-lg border transition-colors ${checked ? 'border-ring bg-card' : 'border-border bg-muted/30'}`}>
       {/* Header row */}
       <div className="flex items-start gap-3 px-3 py-3">
-        <input
-          type="checkbox"
+        <Checkbox
+          size="sm"
           checked={checked}
-          onChange={onToggle}
+          onCheckedChange={onToggle}
           onClick={(e) => e.stopPropagation()}
-          className="mt-1 accent-primary shrink-0 cursor-pointer"
+          className="mt-1 shrink-0 cursor-pointer"
         />
         <button
           type="button"

@@ -11,8 +11,9 @@ import {
 } from '@hugeicons/core-free-icons'
 import { TestStep, TestRunStep, WorkspaceVariable } from '@/lib/types'
 import { SlashCommandMenu } from './SlashCommandMenu'
+import { Test, TestStatus, TestName, TestDuration, TestError, TestErrorMessage } from '@workspace/ui/components/ai-elements/test-results'
 
-import { Button } from '@workspace/ui/components/button'
+import { Button } from '@workspace/ui/components/animate-ui/components/buttons/button'
 import { Badge } from '@workspace/ui/components/badge'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@workspace/ui/components/tooltip'
 
@@ -30,12 +31,12 @@ export function ChevronIcon({ collapsed }: { collapsed: boolean }) {
   return <HugeiconsIcon icon={collapsed ? ArrowRight01Icon : ArrowDown01Icon} size={12} color="currentColor" strokeWidth={1.5} />
 }
 
-function LiveStepDot({ result }: { result: 'PASSED' | 'FAILED' | 'RUNNING' }) {
-  if (result === 'RUNNING') {
-    return <div className="w-2 h-2 mt-1.5 shrink-0 rounded-full bg-primary animate-pulse" />
-  }
+function LiveStepDot({ result }: { result: 'PASSED' | 'FAILED' | 'RUNNING' | 'SKIPPED' }) {
+  const status = result === 'PASSED' ? 'passed' : result === 'FAILED' ? 'failed' : result === 'RUNNING' ? 'running' : 'skipped';
   return (
-    <div className={`w-2 h-2 mt-1.5 shrink-0 rounded-full ${result === 'PASSED' ? 'bg-green-500' : 'bg-destructive'}`} />
+    <Test name="" status={status} className="p-0 border-none bg-transparent gap-0">
+      <TestStatus />
+    </Test>
   )
 }
 
@@ -127,8 +128,8 @@ export function SavedStepRow({
           autoFocus
         />
         <div className="flex justify-end gap-2">
-          <Button variant="ghost" size="xs" onClick={cancelEdit} className="text-xs h-6">Cancel</Button>
-          <Button size="xs" onClick={commitEdit} disabled={saving || !editInstruction.trim()} className="text-xs h-6">
+          <Button variant="ghost" size="sm" onClick={cancelEdit} className="text-xs h-6">Cancel</Button>
+          <Button size="sm" onClick={commitEdit} disabled={saving || !editInstruction.trim()} className="text-xs h-6">
             {saving ? 'Saving…' : 'Save'}
           </Button>
         </div>
@@ -143,37 +144,32 @@ export function SavedStepRow({
     animation: 'shimmer 1.5s linear infinite',
   } : {}
 
-  // Left border stripe — priority: live replay state > last run result > none
-  // CSS vars are oklch so use var() directly, not hsl(var())
-  const borderLeft = replayState === 'running'
-    ? { borderLeftColor: 'var(--primary)', borderLeftWidth: '2px' }
-    : replayState === 'passed'
-    ? { borderLeftColor: '#22c55e', borderLeftWidth: '2px' }
-    : replayState === 'failed'
-    ? { borderLeftColor: 'var(--destructive)', borderLeftWidth: '2px' }
-    : lastRunStep?.result === 'PASSED'
-    ? { borderLeftColor: '#22c55e', borderLeftWidth: '2px' }
-    : lastRunStep?.result === 'FAILED'
-    ? { borderLeftColor: 'var(--destructive)', borderLeftWidth: '2px' }
-    : {}
+  const resultStatus = replayState === 'passed' ? 'passed' 
+    : replayState === 'failed' ? 'failed' 
+    : replayState === 'running' ? 'running' 
+    : lastRunStep?.result === 'PASSED' ? 'passed' 
+    : lastRunStep?.result === 'FAILED' ? 'failed' 
+    : 'skipped'
 
   return (
     <div
       ref={setNodeRef}
-      style={{ ...style, ...shimmerStyle, ...borderLeft }}
-      className={`group rounded-xl border mb-1 transition-colors ${
-        selected ? 'border-primary/50 bg-primary/5' : 'border-border'
-      } ${dimmed ? 'bg-muted/20' : selected ? '' : 'bg-muted/30'} ${isDragging ? 'opacity-50 shadow-lg' : ''}`}
+      style={{ ...style, ...shimmerStyle }}
+      className={`group border-b transition-colors last:border-b-0 ${
+        selected ? 'bg-primary/5' : ''
+      } ${dimmed ? 'bg-muted/10' : selected ? '' : 'bg-background hover:bg-muted/20'} ${isDragging ? 'opacity-50 shadow-lg z-50' : ''}`}
     >
-      <div
-        className={`flex items-center gap-3 px-4 py-3 ${canSelect ? 'cursor-pointer' : ''}`}
+      <Test
+        name={step.description || step.instruction}
+        status={resultStatus as any}
+        className={`flex items-center gap-3 px-4 py-3 rounded-none border-none bg-transparent ${canSelect ? 'cursor-pointer' : ''}`}
         onClick={() => canSelect && onSelect?.()}
       >
         <button
           {...(dimmed ? {} : { ...attributes, ...listeners })}
           tabIndex={-1}
           onClick={(e) => e.stopPropagation()}
-          className={`shrink-0 transition-opacity touch-none select-none ${
+          className={`shrink-0 transition-opacity touch-none select-none -ml-2 ${
             dimmed
               ? 'opacity-0 pointer-events-none'
               : 'opacity-0 group-hover:opacity-40 hover:!opacity-100 cursor-grab active:cursor-grabbing'
@@ -182,12 +178,14 @@ export function SavedStepRow({
           <HugeiconsIcon icon={DragDropVerticalIcon} size={14} color="currentColor" strokeWidth={1.5} />
         </button>
 
+        {resultStatus !== 'skipped' && <TestStatus />}
+
         <Tooltip>
           <TooltipTrigger asChild>
             <div className="flex-1 min-w-0">
-              <span className={`text-sm truncate block ${dimmed ? 'text-muted-foreground/60' : 'text-muted-foreground'}`}>
+              <TestName className={`text-sm truncate block ${dimmed ? 'text-muted-foreground' : 'text-foreground/90 font-medium'}`}>
                 {step.description || step.instruction}
-              </span>
+              </TestName>
             </div>
           </TooltipTrigger>
           <TooltipContent side="top" className="max-w-xs text-xs">
@@ -251,7 +249,7 @@ export function SavedStepRow({
             </div>
           </div>
         )}
-      </div>
+      </Test>
     </div>
   )
 }
@@ -259,11 +257,14 @@ export function SavedStepRow({
 // ─── LiveStepCard ─────────────────────────────────────────────────────────────
 
 export function LiveStepCard({ step }: { step: LiveStep }) {
+  const status = step.result === 'PASSED' ? 'passed' : step.result === 'FAILED' ? 'failed' : step.result === 'RUNNING' ? 'running' : 'skipped';
+  
   return (
-    <div
-      className={`flex flex-col gap-2 px-4 py-3 rounded-xl border bg-card mb-1 ${
-        step.result === 'FAILED' ? 'border-destructive/40' : 'border-border'
-      }`}
+    <Test
+      name={step.instruction}
+      status={status as any}
+      duration={step.durationMs}
+      className="flex-col items-stretch gap-2 px-4 py-3 border-b border-border/40 bg-background last:border-b-0"
       style={step.result === 'RUNNING' ? {
         backgroundImage: 'linear-gradient(90deg, transparent 0%, oklch(1 0 0 / 6%) 50%, transparent 100%)',
         backgroundSize: '300px 100%',
@@ -272,72 +273,67 @@ export function LiveStepCard({ step }: { step: LiveStep }) {
       } : {}}
     >
       <div className="flex items-center gap-3">
-        <LiveStepDot result={step.result} />
+        <TestStatus />
         <Tooltip>
           <TooltipTrigger asChild>
-            <span className="flex-1 min-w-0 text-sm text-card-foreground truncate cursor-default">
-              {step.instruction}
-            </span>
+            <div className="flex-1 min-w-0">
+              <TestName className="text-sm text-card-foreground truncate cursor-default block">
+                {step.instruction}
+              </TestName>
+            </div>
           </TooltipTrigger>
           <TooltipContent side="top" className="max-w-xs text-xs">
             {step.instruction}
           </TooltipContent>
         </Tooltip>
-        <div className="flex items-center gap-2 shrink-0">
-          {step.durationMs !== undefined && (
-            <span className="text-xs text-muted-foreground">{step.durationMs}ms</span>
-          )}
-          {step.result !== 'RUNNING' && (
-            <Badge variant={step.result === 'PASSED' ? 'secondary' : 'destructive'} className="text-xs">
-              {step.result}
-            </Badge>
-          )}
-        </div>
+        {step.durationMs !== undefined && (
+          <TestDuration />
+        )}
       </div>
       {step.errorMessage && (
-        <p className="text-xs text-destructive bg-destructive/10 px-2 py-1 rounded ml-5">
-          {step.errorMessage}
-        </p>
+        <TestError className="ml-7 mt-0">
+          <TestErrorMessage>{step.errorMessage}</TestErrorMessage>
+        </TestError>
       )}
-    </div>
+    </Test>
   )
 }
 
 // ─── RunStepRow ───────────────────────────────────────────────────────────────
 
 export function RunStepRow({ step }: { step: TestRunStep }) {
+  const status = step.result === 'PASSED' ? 'passed' : step.result === 'FAILED' ? 'failed' : 'skipped';
+  
   return (
-    <div className={`rounded-xl border px-4 py-3 mb-1 bg-card ${
-      step.result === 'FAILED' ? 'border-destructive/40' : 'border-border'
-    }`}>
+    <Test
+      name={step.description || step.instruction}
+      status={status as any}
+      duration={step.durationMs}
+      className="flex-col items-stretch px-4 py-3 border-b border-border/40 bg-background last:border-b-0"
+    >
       <div className="flex items-center gap-3">
-        <div className={`w-2 h-2 mt-0.5 shrink-0 rounded-full ${
-          step.result === 'PASSED' ? 'bg-green-500' : step.result === 'FAILED' ? 'bg-destructive' : 'bg-muted-foreground/40'
-        }`} />
+        <TestStatus />
         <Tooltip>
           <TooltipTrigger asChild>
-            <span className="flex-1 min-w-0 text-sm text-card-foreground truncate cursor-default">
-              {step.description || step.instruction}
-            </span>
+            <div className="flex-1 min-w-0">
+              <TestName className="text-sm text-card-foreground truncate cursor-default block">
+                {step.description || step.instruction}
+              </TestName>
+            </div>
           </TooltipTrigger>
           <TooltipContent side="top" className="max-w-xs text-xs">
             {step.instruction}
           </TooltipContent>
         </Tooltip>
-        <div className="flex items-center gap-2 shrink-0">
-          {step.durationMs !== undefined && (
-            <span className="text-xs text-muted-foreground">{step.durationMs}ms</span>
-          )}
-          <Badge variant={step.result === 'PASSED' ? 'secondary' : 'destructive'} className="text-xs">
-            {step.result}
-          </Badge>
-        </div>
+        {step.durationMs !== undefined && (
+          <TestDuration />
+        )}
       </div>
       {step.errorMessage && (
-        <p className="text-xs text-destructive bg-destructive/10 px-2 py-1 rounded ml-5 mt-2">
-          {step.errorMessage}
-        </p>
+        <TestError className="ml-7 mt-0">
+          <TestErrorMessage>{step.errorMessage}</TestErrorMessage>
+        </TestError>
       )}
-    </div>
+    </Test>
   )
 }

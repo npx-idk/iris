@@ -143,6 +143,8 @@ model Project {
   members     ProjectMember[]
   apiKeys     ApiKey[]
   tests       Test[]
+  folders     Folder[]
+  flows       Flow[]
 
   @@map("projects")
 }
@@ -195,26 +197,47 @@ model ApiKey {
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
+model Folder {
+  id        String   @id @default(cuid())
+  name      String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  parentId  String?
+  parent    Folder?  @relation("FolderTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children  Folder[] @relation("FolderTree")
+
+  tests     Test[]
+
+  @@map("folders")
+}
+
 model Test {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  startUrl    String?
+  id                String   @id @default(cuid())
+  name              String
+  description       String?
+  startUrl          String?
   order             Int      @default(0)
   enabled           Boolean  @default(true)
   continueOnFailure Boolean  @default(false)
-  tags        String[] @default([])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  tags              String[] @default([])
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
-  projectId   String
-  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
-  steps       TestStep[]
-  runs        TestRun[]
+  folderId  String?
+  folder    Folder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
 
-  prerequisites     Test[] @relation("TestPrerequisites")
-  prerequisiteOf    Test[] @relation("TestPrerequisites")
+  steps          TestStep[]
+  runs           TestRun[]
+  prerequisites  Test[]     @relation("TestPrerequisites")
+  prerequisiteOf Test[]     @relation("TestPrerequisites")
 
   @@map("tests")
 }
@@ -307,4 +330,18 @@ model TestRunStep {
   testStep   TestStep? @relation(fields: [testStepId], references: [id], onDelete: SetNull)
 
   @@map("test_run_steps")
+}
+
+model Flow {
+  id        String   @id @default(cuid())
+  name      String
+  nodes     Json     @default("[]")
+  edges     Json     @default("[]")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("flows")
 }

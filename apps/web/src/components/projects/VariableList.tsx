@@ -1,13 +1,96 @@
 'use client';
 
 import { useState } from 'react';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { api } from '@/lib/api';
 import type { WorkspaceVariable } from '@/lib/types';
-import { Button } from '@workspace/ui/components/button';
-import { Input } from '@workspace/ui/components/input';
-import { Badge } from '@workspace/ui/components/badge';
-import { Label } from '@workspace/ui/components/label';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@workspace/ui/components/card';
+import { Button } from '@iris/ui/components/animate-ui/components/buttons/button';
+import { Checkbox } from '@iris/ui/components/animate-ui/components/radix/checkbox';
+import { ConfirmDialog } from '@/components/confirm-dialog';
+import { Input } from '@iris/ui/components/input';
+import { Badge } from '@iris/ui/components/badge';
+import { Label } from '@iris/ui/components/label';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardAction } from '@iris/ui/components/card';
+import {
+  Dialog, DialogTrigger, DialogContent, DialogHeader,
+  DialogTitle, DialogDescription, DialogFooter, DialogClose,
+} from '@iris/ui/components/animate-ui/components/radix/dialog';
+
+// ─── Edit row ───────────────────────────────────────────────────────────────────
+
+const editSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  value: z.string().optional(),
+  isSecret: z.boolean(),
+})
+type EditValues = z.infer<typeof editSchema>
+
+function EditVariableRow({
+  variable,
+  onSave,
+  onCancel,
+}: {
+  variable: WorkspaceVariable;
+  onSave: () => void;
+  onCancel: () => void;
+}) {
+  const { register, handleSubmit, watch, control, formState: { errors } } = useForm<EditValues>({
+    resolver: zodResolver(editSchema as any),
+    mode: 'onBlur',
+    defaultValues: { name: variable.name, value: '', isSecret: variable.isSecret },
+  });
+
+  const isSecret = watch('isSecret');
+
+  async function onSubmit(values: EditValues) {
+    const payload: Record<string, unknown> = { name: values.name, isSecret: values.isSecret };
+    if (values.value) payload.value = values.value;
+    await api.patch(`/workspace/variables/${variable.id}`, payload);
+    onSave();
+  }
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-2">
+      <div className="flex gap-2">
+        <div className="flex-1">
+          <Input {...register('name')} placeholder="name" className="font-mono text-xs" />
+          {errors.name && <p className="text-xs text-destructive mt-0.5">{errors.name.message}</p>}
+        </div>
+        <Input
+          {...register('value')}
+          type={isSecret ? 'password' : 'text'}
+          placeholder={variable.isSecret ? 'New value (leave blank to keep current)' : 'value'}
+          className="flex-1 text-xs"
+        />
+      </div>
+      <div className="flex items-center justify-between">
+        <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+          <Controller control={control} name="isSecret" render={({ field }) => (
+            <Checkbox size="sm" checked={field.value} onCheckedChange={field.onChange} />
+          )} />
+          Secret
+        </label>
+        <div className="flex gap-2">
+          <Button size="sm" type="submit">Save</Button>
+          <Button size="sm" variant="ghost" type="button" onClick={onCancel}>Cancel</Button>
+        </div>
+      </div>
+    </form>
+  );
+}
+
+// ─── Create form ────────────────────────────────────────────────────────────────
+
+const createSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  value: z.string().min(1, 'Value is required'),
+  isSecret: z.boolean(),
+})
+type CreateValues = z.infer<typeof createSchema>
+
+// ─── Main component ─────────────────────────────────────────────────────────────
 
 interface Props {
   variables: WorkspaceVariable[];
@@ -15,34 +98,26 @@ interface Props {
 }
 
 export function VariableList({ variables, onUpdate }: Props) {
-  const [form, setForm] = useState({ name: '', value: '', isSecret: false });
-  const [creating, setCreating] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ name: '', value: '', isSecret: false });
+  const [open, setOpen] = useState(false);
 
-  async function handleCreate(e: React.FormEvent) {
-    e.preventDefault();
-    setCreating(true);
+  const { register, handleSubmit, reset, watch, control, setError, formState: { errors, isSubmitting } } = useForm<CreateValues>({
+    resolver: zodResolver(createSchema as any),
+    mode: 'onBlur',
+    defaultValues: { name: '', value: '', isSecret: false },
+  });
+
+  const isSecretWatch = watch('isSecret');
+
+  async function onCreate(values: CreateValues) {
     try {
-      await api.post('/workspace/variables', form);
-      setForm({ name: '', value: '', isSecret: false });
+      await api.post('/workspace/variables', values);
+      setOpen(false);
+      reset();
       onUpdate();
-    } finally {
-      setCreating(false);
+    } catch (err) {
+      setError('root', { message: err instanceof Error ? err.message : 'Failed to add variable' });
     }
-  }
-
-  function startEdit(v: WorkspaceVariable) {
-    setEditingId(v.id);
-    setEditForm({ name: v.name, value: '', isSecret: v.isSecret });
-  }
-
-  async function handleSaveEdit(varId: string) {
-    const payload: Record<string, unknown> = { name: editForm.name, isSecret: editForm.isSecret };
-    if (editForm.value) payload.value = editForm.value;
-    await api.patch(`/workspace/variables/${varId}`, payload);
-    setEditingId(null);
-    onUpdate();
   }
 
   async function handleDelete(varId: string) {
@@ -51,134 +126,98 @@ export function VariableList({ variables, onUpdate }: Props) {
   }
 
   return (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>Workspace variables</CardTitle>
-          <CardDescription>
-            Reference variables in any test step using <code className="text-xs bg-muted px-1 py-0.5 rounded">{'{{variableName}}'}</code>.
-            Shared across all projects. Secret values are never logged.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="p-0">
-          {variables.length === 0 ? (
-            <p className="px-4 py-6 text-xs text-muted-foreground text-center">No variables yet</p>
-          ) : (
-            variables.map((v, i) => (
-              <div
-                key={v.id}
-                className={`px-4 py-3${i > 0 ? ' border-t border-border' : ''}`}
-              >
-                {editingId === v.id ? (
-                  <div className="flex flex-col gap-2">
-                    <div className="flex gap-2">
-                      <Input
-                        value={editForm.name}
-                        onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))}
-                        placeholder="name"
-                        className="flex-1 font-mono text-xs"
-                      />
-                      <Input
-                        type={editForm.isSecret ? 'password' : 'text'}
-                        value={editForm.value}
-                        onChange={(e) => setEditForm((f) => ({ ...f, value: e.target.value }))}
-                        placeholder={v.isSecret ? 'New value (leave blank to keep current)' : 'value'}
-                        className="flex-1 text-xs"
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
-                        <input
-                          type="checkbox"
-                          checked={editForm.isSecret}
-                          onChange={(e) => setEditForm((f) => ({ ...f, isSecret: e.target.checked }))}
-                          className="accent-primary"
-                        />
-                        Secret
-                      </label>
-                      <div className="flex gap-2">
-                        <Button size="xs" onClick={() => handleSaveEdit(v.id)}>Save</Button>
-                        <Button size="xs" variant="ghost" onClick={() => setEditingId(null)}>Cancel</Button>
-                      </div>
-                    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Workspace variables</CardTitle>
+        <CardDescription>
+          Reference variables in any test step using <code className="text-xs bg-muted px-1 py-0.5 rounded">{'{{variableName}}'}</code>.
+          Shared across all projects. Secret values are never logged.
+        </CardDescription>
+        <CardAction>
+          <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) reset(); }}>
+            <DialogTrigger asChild>
+              <Button size="sm">Add variable</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add variable</DialogTitle>
+                <DialogDescription>
+                  Secret values are encrypted at rest and never shown in logs.
+                </DialogDescription>
+              </DialogHeader>
+              <form id="variable-form" onSubmit={handleSubmit(onCreate)} className="space-y-4">
+                <div className="space-y-1">
+                  <Label htmlFor="var-name">Name</Label>
+                  <Input id="var-name" {...register('name')} placeholder="email" className="font-mono" />
+                  {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="var-value">Value</Label>
+                  <Input
+                    id="var-value"
+                    {...register('value')}
+                    type={isSecretWatch ? 'password' : 'text'}
+                    placeholder={isSecretWatch ? '••••••••' : 'test@example.com'}
+                  />
+                  {errors.value && <p className="text-xs text-destructive">{errors.value.message}</p>}
+                </div>
+                <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer select-none">
+                  <Controller control={control} name="isSecret" render={({ field }) => (
+                    <Checkbox size="sm" checked={field.value} onCheckedChange={field.onChange} />
+                  )} />
+                  Mark as secret
+                </label>
+                {errors.root && <p className="text-xs text-destructive">{errors.root.message}</p>}
+              </form>
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button variant="ghost">Cancel</Button>
+                </DialogClose>
+                <Button type="submit" form="variable-form" disabled={isSubmitting}>
+                  {isSubmitting ? 'Adding...' : 'Add variable'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </CardAction>
+      </CardHeader>
+      <CardContent className="p-0">
+        {variables.length === 0 ? (
+          <p className="px-4 py-6 text-xs text-muted-foreground text-center">No variables yet</p>
+        ) : (
+          variables.map((v, i) => (
+            <div key={v.id} className={`px-4 py-3${i > 0 ? ' border-t border-border' : ''}`}>
+              {editingId === v.id ? (
+                <EditVariableRow
+                  variable={v}
+                  onSave={() => { setEditingId(null); onUpdate(); }}
+                  onCancel={() => setEditingId(null)}
+                />
+              ) : (
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <code className="text-xs font-mono font-medium text-foreground shrink-0">{v.name}</code>
+                    {v.isSecret ? (
+                      <Badge variant="secondary">secret</Badge>
+                    ) : (
+                      <span className="text-xs text-muted-foreground font-mono truncate">{v.value}</span>
+                    )}
                   </div>
-                ) : (
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <code className="text-xs font-mono font-medium text-foreground shrink-0">{v.name}</code>
-                      {v.isSecret ? (
-                        <Badge variant="secondary">secret</Badge>
-                      ) : (
-                        <span className="text-xs text-muted-foreground font-mono truncate">{v.value}</span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <Button size="xs" variant="ghost" onClick={() => startEdit(v)}>Edit</Button>
-                      <Button
-                        size="xs"
-                        variant="ghost"
-                        onClick={() => handleDelete(v.id)}
-                        className="text-destructive hover:text-destructive"
-                      >
-                        Delete
-                      </Button>
-                    </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Button size="sm" variant="ghost" onClick={() => setEditingId(v.id)}>Edit</Button>
+                    <ConfirmDialog
+                      title="Delete variable?"
+                      description={`"${v.name}" will be permanently deleted.`}
+                      onConfirm={() => handleDelete(v.id)}
+                      trigger={<Button size="sm" variant="ghost" className="text-destructive hover:text-destructive">Delete</Button>}
+                    />
                   </div>
-                )}
-              </div>
-            ))
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Add variable</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleCreate} className="space-y-3">
-            <div className="flex gap-2">
-              <div className="flex-1 space-y-1">
-                <Label htmlFor="var-name" className="text-xs">Name</Label>
-                <Input
-                  id="var-name"
-                  value={form.name}
-                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                  required
-                  placeholder="email"
-                  className="font-mono text-xs"
-                />
-              </div>
-              <div className="flex-1 space-y-1">
-                <Label htmlFor="var-value" className="text-xs">Value</Label>
-                <Input
-                  id="var-value"
-                  type={form.isSecret ? 'password' : 'text'}
-                  value={form.value}
-                  onChange={(e) => setForm((f) => ({ ...f, value: e.target.value }))}
-                  required
-                  placeholder={form.isSecret ? '••••••••' : 'test@example.com'}
-                  className="text-xs"
-                />
-              </div>
+                </div>
+              )}
             </div>
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={form.isSecret}
-                  onChange={(e) => setForm((f) => ({ ...f, isSecret: e.target.checked }))}
-                  className="accent-primary"
-                />
-                Mark as secret
-              </label>
-              <Button type="submit" size="sm" disabled={creating}>
-                {creating ? 'Adding...' : 'Add variable'}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+          ))
+        )}
+      </CardContent>
+    </Card>
   );
 }

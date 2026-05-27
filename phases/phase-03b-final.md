@@ -124,7 +124,7 @@ mkdir -p packages/agent/src
     "@browserbasehq/sdk": "^2.0.0"
   },
   "devDependencies": {
-    "@workspace/typescript-config": "workspace:*",
+    "@iris/typescript-config": "workspace:*",
     "@types/node": "^22.0.0",
     "typescript": "5.9.3"
   }
@@ -134,7 +134,7 @@ mkdir -p packages/agent/src
 **`packages/agent/tsconfig.json`**
 ```json
 {
-  "extends": "@workspace/typescript-config/base.json",
+  "extends": "@iris/typescript-config/base.json",
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": "./src",

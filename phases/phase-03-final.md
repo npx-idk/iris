@@ -201,7 +201,7 @@ mkdir -p packages/runner/src
     "playwright": "^1.49.1"
   },
   "devDependencies": {
-    "@workspace/typescript-config": "workspace:*",
+    "@iris/typescript-config": "workspace:*",
     "@types/node": "^22.0.0",
     "typescript": "5.9.3"
   }
@@ -211,7 +211,7 @@ mkdir -p packages/runner/src
 **`packages/runner/tsconfig.json`**
 ```json
 {
-  "extends": "@workspace/typescript-config/base.json",
+  "extends": "@iris/typescript-config/base.json",
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": "./src",

@@ -6,6 +6,7 @@ import { runTest, createStagehand, StepLog } from '@iris/agent'
 import { prisma } from '../prisma/prisma'
 import { ArtifactsService } from '../common/artifacts.service'
 import { RUN_QUEUE, RunJobPayload } from './queue.constants'
+import { RunsService } from '../runs/runs.service'
 
 type BrowserSession = Awaited<ReturnType<typeof createStagehand>>
 
@@ -16,11 +17,12 @@ export class TestRunProcessor {
   constructor(
     private eventEmitter: EventEmitter2,
     private artifacts: ArtifactsService,
+    private runsService: RunsService,
   ) {}
 
   @Process({ name: 'execute', concurrency: 3 })
   async handleRun(job: Job<RunJobPayload>): Promise<void> {
-    const { runId, prerequisiteRunIds = [] } = job.data
+    const { runId, prerequisiteRunIds = [], flowRunIds = [] } = job.data
     this.logger.log(`Processing run ${runId}`)
 
     const env = (process.env.BROWSER_ENV ?? 'LOCAL') as 'LOCAL' | 'BROWSERBASE'
@@ -39,35 +41,62 @@ export class TestRunProcessor {
 
     if (!stagehand) {
       await this.failRun(runId, 'Failed to launch browser session')
+      if (flowRunIds.length > 0) {
+        await this.cancelRemainingRuns(flowRunIds.slice(1), 'Failed to launch browser session')
+      }
       return
     }
 
-    // Notify the main run's page that the browser is live so its canvas activates immediately,
-    // even while prerequisites are still executing.
-    if (prerequisiteRunIds.length > 0) {
-      const liveViewUrl = env === 'LOCAL'
-        ? `ws://localhost:${process.env.API_PORT ?? 3000}/sessions/${runId}/stream`
-        : null
-      this.eventEmitter.emit(`run.${runId}.started`, { runId, liveViewUrl })
-    }
-
     try {
-      for (const prereqRunId of prerequisiteRunIds) {
-        const prereqResult = await this.executeRun(prereqRunId, env, stagehand, async (frameBase64) => {
-          this.eventEmitter.emit(`run.${prereqRunId}.frame`, { runId: prereqRunId, frameBase64 })
-          // Mirror frames to main run so its canvas shows the prereq phase
-          this.eventEmitter.emit(`run.${runId}.frame`, { runId, frameBase64 })
-        }, runId)
+      if (flowRunIds.length > 0) {
+        for (const fRunId of flowRunIds) {
+          // Check if this run was cancelled before executing
+          const dbRun = await prisma.testRun.findUnique({
+            where: { id: fRunId },
+            select: { status: true },
+          })
+          if (dbRun?.status === 'CANCELLED') {
+            await this.cancelRemainingRuns(flowRunIds.slice(flowRunIds.indexOf(fRunId)), 'Flow execution was cancelled')
+            return
+          }
 
-        if (prereqResult.status !== 'PASSED') {
-          await this.failRun(runId, `Prerequisite test failed: ${prereqResult.errorMessage ?? prereqRunId}`)
-          return
+          const result = await this.executeRun(fRunId, env, stagehand, async (frameBase64) => {
+            this.eventEmitter.emit(`run.${fRunId}.frame`, { runId: fRunId, frameBase64 })
+          })
+
+          if (result.status !== 'PASSED') {
+            const remaining = flowRunIds.slice(flowRunIds.indexOf(fRunId) + 1)
+            await this.cancelRemainingRuns(remaining, `Flow stopped because run ${fRunId} was not PASSED`)
+            return
+          }
         }
-      }
+      } else {
+        // Notify the main run's page that the browser is live so its canvas activates immediately,
+        // even while prerequisites are still executing.
+        if (prerequisiteRunIds.length > 0) {
+          const liveViewUrl = env === 'LOCAL'
+            ? `ws://localhost:${process.env.API_PORT ?? 3000}/sessions/${runId}/stream`
+            : null
+          this.eventEmitter.emit(`run.${runId}.started`, { runId, liveViewUrl })
+        }
 
-      await this.executeRun(runId, env, stagehand, async (frameBase64) => {
-        this.eventEmitter.emit(`run.${runId}.frame`, { runId, frameBase64 })
-      })
+        for (const prereqRunId of prerequisiteRunIds) {
+          const prereqResult = await this.executeRun(prereqRunId, env, stagehand, async (frameBase64) => {
+            this.eventEmitter.emit(`run.${prereqRunId}.frame`, { runId: prereqRunId, frameBase64 })
+            // Mirror frames to main run so its canvas shows the prereq phase
+            this.eventEmitter.emit(`run.${runId}.frame`, { runId, frameBase64 })
+          }, runId)
+
+          if (prereqResult.status !== 'PASSED') {
+            await this.failRun(runId, `Prerequisite test failed: ${prereqResult.errorMessage ?? prereqRunId}`)
+            return
+          }
+        }
+
+        await this.executeRun(runId, env, stagehand, async (frameBase64) => {
+          this.eventEmitter.emit(`run.${runId}.frame`, { runId, frameBase64 })
+        })
+      }
     } finally {
       await stagehand.close().catch(() => { })
     }
@@ -124,6 +153,16 @@ export class TestRunProcessor {
       liveViewUrl: env === 'LOCAL' ? localLiveViewUrl : null,
     })
 
+    this.runsService.emitRunChanged({
+      id: runId,
+      status: 'RUNNING',
+      createdAt: new Date().toISOString(),
+      testId: test.id,
+      testName: test.name,
+      projectId: test.projectId,
+      projectName: test.project.name,
+    })
+
     let frameCounter = 0
     const result = await runTest(
       {
@@ -145,6 +184,15 @@ export class TestRunProcessor {
         continueOnFailure: test.continueOnFailure,
 
         onStepComplete: async (log: StepLog) => {
+          // Check if this run has been cancelled
+          const checkCancel = await prisma.testRun.findUnique({
+            where: { id: runId },
+            select: { status: true },
+          })
+          if (checkCancel?.status === 'CANCELLED') {
+            throw new Error('Run cancelled by user')
+          }
+
           let screenshotUrl: string | undefined
           if (log.screenshotBase64) {
             screenshotUrl = await this.artifacts.saveScreenshot(runId, log.stepIndex, log.screenshotBase64).catch(() => undefined)
@@ -194,12 +242,20 @@ export class TestRunProcessor {
       stagehand,
     )
 
+    const currentRun = await prisma.testRun.findUnique({
+      where: { id: runId },
+      select: { status: true },
+    })
+
+    const finalStatus = currentRun?.status === 'CANCELLED' ? 'CANCELLED' : (result.status as any)
+    const finalErrorMessage = currentRun?.status === 'CANCELLED' ? 'Run cancelled by user' : result.errorMessage
+
     await prisma.testRun.update({
       where: { id: runId },
       data: {
-        status: result.status as any,
+        status: finalStatus,
         finishedAt: new Date(),
-        errorMessage: result.errorMessage,
+        errorMessage: finalErrorMessage,
         totalSteps: result.stepLogs.length,
         passedSteps: result.stepLogs.filter((s) => s.result === 'PASSED').length,
         liveViewUrl: result.liveViewUrl,
@@ -213,10 +269,42 @@ export class TestRunProcessor {
       await this.artifacts.saveBrowserEvents(runId, result.browserEvents).catch(() => {})
     }
 
-    this.eventEmitter.emit(`run.${runId}.completed`, { runId, result })
-    this.logger.log(`Run ${runId}: ${result.status}`)
+    this.eventEmitter.emit(`run.${runId}.completed`, { runId, result: { ...result, status: finalStatus, errorMessage: finalErrorMessage } })
+    this.runsService.emitRunChanged({
+      id: runId,
+      status: finalStatus,
+      createdAt: new Date().toISOString(),
+      testId: test.id,
+      testName: test.name,
+      projectId: test.projectId,
+      projectName: test.project.name,
+    })
+    this.logger.log(`Run ${runId}: ${finalStatus}`)
 
-    return { status: result.status, errorMessage: result.errorMessage }
+    return { status: finalStatus, errorMessage: finalErrorMessage }
+  }
+
+  private async cancelRemainingRuns(runIds: string[], errorMessage: string): Promise<void> {
+    for (const runId of runIds) {
+      const run = await prisma.testRun.update({
+        where: { id: runId },
+        data: { status: 'CANCELLED', finishedAt: new Date(), errorMessage },
+        include: { test: { include: { project: true } } },
+      })
+      this.eventEmitter.emit(`run.${runId}.completed`, {
+        runId,
+        result: { status: 'CANCELLED', errorMessage },
+      })
+      this.runsService.emitRunChanged({
+        id: runId,
+        status: 'CANCELLED',
+        createdAt: run.createdAt,
+        testId: run.test.id,
+        testName: run.test.name,
+        projectId: run.test.project.id,
+        projectName: run.test.project.name,
+      })
+    }
   }
 
   private async failRun(runId: string, message: string): Promise<void> {

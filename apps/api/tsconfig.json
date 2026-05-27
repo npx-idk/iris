@@ -1,5 +1,5 @@
 {
-  "extends": "@workspace/typescript-config/nestjs.json",
+  "extends": "@iris/typescript-config/nestjs.json",
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": "./src",

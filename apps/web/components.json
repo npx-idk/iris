@@ -14,8 +14,8 @@
     "components": "@/components",
     "hooks": "@/hooks",
     "lib": "@/lib",
-    "utils": "@workspace/ui/lib/utils",
-    "ui": "@workspace/ui/components"
+    "utils": "@iris/ui/lib/utils",
+    "ui": "@iris/ui/components"
   },
   "rtl": false,
   "menuColor": "default",

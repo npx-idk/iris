@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  transpilePackages: ["@workspace/ui", "@iris/common"],
+  transpilePackages: ["@iris/ui", "@iris/common"],
 }
 
 export default nextConfig

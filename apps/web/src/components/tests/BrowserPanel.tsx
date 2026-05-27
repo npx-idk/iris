@@ -15,7 +15,7 @@ import { NetworkPanel, type NetworkEntry } from './NetworkPanel'
 import { ConsolePanel, type ConsoleEntry } from './ConsolePanel'
 import { ApplicationPanel } from './ApplicationPanel'
 import { FramePlayer } from './FramePlayer'
-import { Button } from '@workspace/ui/components/button'
+import { Button } from '@iris/ui/components/animate-ui/components/buttons/button'
 
 interface BrowserPanelProps {
   sessionId: string | null
@@ -81,7 +81,7 @@ export function BrowserPanel({
   if (selectedStep) {
     const passed = selectedRunStep?.result === 'PASSED'
     return (
-      <div className="flex-1 bg-card flex flex-col overflow-hidden">
+      <div className="flex-1 bg-card flex flex-col overflow-hidden min-w-0">
         {/* Header */}
         <div className="flex items-start gap-3 px-5 py-[9px] border-b border-border shrink-0">
           <div className="flex-1 min-w-0">
@@ -176,7 +176,7 @@ export function BrowserPanel({
   }
 
   return (
-    <div className="flex-1 bg-muted/20 flex flex-col overflow-hidden">
+    <div className="flex-1 bg-muted/20 flex flex-col overflow-hidden min-w-0">
 
       {/* ── Author mode: tab bar ── */}
       {sessionId && !runActive && browserTabs.length > 0 && (
@@ -248,44 +248,58 @@ export function BrowserPanel({
       {/* ── Canvas area (always mounted; collapses to h-0 when idle so it keeps receiving frames) ── */}
       <div className={showCanvas ? 'flex-1 flex items-center justify-center p-6 overflow-hidden min-h-0' : 'h-0 overflow-hidden'}>
         <div className="w-full max-w-4xl space-y-3">
-          <div className="relative">
-            <canvas
-              ref={canvasRef}
-              width={1280}
-              height={720}
-              tabIndex={0}
-              className={`w-full aspect-video rounded-xl border bg-black outline-none transition-colors ${
-                sessionState === 'ready' && !runActive && interactiveMode
-                  ? 'border-primary cursor-crosshair'
-                  : 'border-border cursor-default'
-              }`}
-              onMouseDown={canvasHandlers.onMouseDown}
-              onMouseUp={canvasHandlers.onMouseUp}
-              onMouseMove={canvasHandlers.onMouseMove}
-              onMouseLeave={canvasHandlers.onMouseLeave}
-              onContextMenu={canvasHandlers.onContextMenu}
-              onKeyDown={canvasHandlers.onKeyDown}
-              onKeyUp={canvasHandlers.onKeyUp}
-            />
-            {sessionState === 'ready' && !runActive && !interactiveMode && (
-              <div className="absolute bottom-3 right-3 cursor-pointer" onClick={() => { onInteractiveModeChange(true); canvasRef.current?.focus() }}>
-                <div className="flex items-center gap-1.5 bg-card/90 backdrop-blur-sm border border-border rounded-md px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:border-primary transition-colors select-none">
-                  <HugeiconsIcon icon={Cursor01Icon} size={12} color="currentColor" strokeWidth={1.5} />
-                  Enable interaction
+          <div className="relative rounded-xl border border-border shadow-xl overflow-hidden bg-black flex flex-col">
+            {/* Mock Browser Chrome */}
+            <div className="h-9 bg-muted/80 border-b border-border flex items-center px-4 gap-2 shrink-0">
+              <div className="w-2.5 h-2.5 rounded-full bg-red-500/80" />
+              <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/80" />
+              <div className="w-2.5 h-2.5 rounded-full bg-green-500/80" />
+              <div className="flex-1 flex justify-center mr-8">
+                <div className="h-5 w-64 bg-background/50 rounded-md text-[10px] text-muted-foreground/50 flex items-center justify-center font-mono select-none">
+                  live session
                 </div>
               </div>
-            )}
-            {sessionState === 'ready' && !runActive && interactiveMode && (
-              <div className="absolute top-2 right-2">
-                <button
-                  onClick={() => onInteractiveModeChange(false)}
-                  className="flex items-center gap-1.5 bg-primary text-primary-foreground text-xs px-2.5 py-1 rounded-md hover:bg-primary/90 transition-colors"
-                >
-                  <span className="w-1.5 h-1.5 rounded-full bg-primary-foreground animate-pulse" />
-                  Interacting · click to stop
-                </button>
-              </div>
-            )}
+            </div>
+            
+            <div className="relative">
+              <canvas
+                ref={canvasRef}
+                width={1280}
+                height={720}
+                tabIndex={0}
+                className={`w-full aspect-video bg-black outline-none transition-colors ${
+                  sessionState === 'ready' && !runActive && interactiveMode
+                    ? 'cursor-crosshair'
+                    : 'cursor-default'
+                }`}
+                onMouseDown={canvasHandlers.onMouseDown}
+                onMouseUp={canvasHandlers.onMouseUp}
+                onMouseMove={canvasHandlers.onMouseMove}
+                onMouseLeave={canvasHandlers.onMouseLeave}
+                onContextMenu={canvasHandlers.onContextMenu}
+                onKeyDown={canvasHandlers.onKeyDown}
+                onKeyUp={canvasHandlers.onKeyUp}
+              />
+              {sessionState === 'ready' && !runActive && !interactiveMode && (
+                <div className="absolute bottom-3 right-3 cursor-pointer" onClick={() => { onInteractiveModeChange(true); canvasRef.current?.focus() }}>
+                  <div className="flex items-center gap-1.5 bg-card/90 backdrop-blur-sm border border-border rounded-md px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:border-primary transition-colors select-none shadow-sm">
+                    <HugeiconsIcon icon={Cursor01Icon} size={12} color="currentColor" strokeWidth={1.5} />
+                    Enable interaction
+                  </div>
+                </div>
+              )}
+              {sessionState === 'ready' && !runActive && interactiveMode && (
+                <div className="absolute top-2 right-2">
+                  <button
+                    onClick={() => onInteractiveModeChange(false)}
+                    className="flex items-center gap-1.5 bg-primary text-primary-foreground text-xs px-2.5 py-1 rounded-md hover:bg-primary/90 transition-colors shadow-md"
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary-foreground animate-pulse" />
+                    Interacting · click to stop
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
           {isBusy && statusLabel && !runActive && (
             <p className="text-xs text-center text-muted-foreground">{statusLabel}</p>
@@ -304,14 +318,14 @@ export function BrowserPanel({
                 {/* Logs below recording */}
                 {runEvents && (
                   <div className="rounded-xl border border-border bg-card overflow-hidden">
-                    <div className="flex items-center border-b border-border bg-muted/30">
+                    <div className="flex items-center p-1.5 border-b border-border bg-muted/10 gap-1">
                       {(['network', 'console'] as const).map((t) => {
                         const errorCount = runEvents.console.filter((e) => e.kind === 'error').length
                         return (
                           <button
                             key={t}
                             onClick={() => setBottomTab(t)}
-                            className={`px-4 py-1.5 text-xs font-medium border-b-2 transition-colors capitalize flex items-center gap-1.5 ${bottomTab === t ? 'border-primary text-foreground bg-card' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+                            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors capitalize flex items-center gap-1.5 ${bottomTab === t ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'}`}
                           >
                             {t === 'network' && <>{runEvents.network.length > 0 && <span className="text-muted-foreground">{runEvents.network.length}</span>} Network</>}
                             {t === 'console' && (
@@ -352,12 +366,12 @@ export function BrowserPanel({
         const errorCount = consoleEntries.filter((e) => e.kind === 'error' || e.kind === 'exception').length
         return (
           <div className="shrink-0 border-t border-border bg-card flex flex-col h-72">
-            <div className="flex items-center border-b border-border shrink-0 bg-muted/30">
+            <div className="flex items-center p-1.5 border-b border-border shrink-0 bg-muted/10 gap-1">
               {(['network', 'console', 'application'] as const).map((t) => (
                 <button
                   key={t}
                   onClick={() => setBottomTab(t)}
-                  className={`px-4 py-1.5 text-xs font-medium border-b-2 transition-colors capitalize flex items-center gap-1.5 ${bottomTab === t ? 'border-primary text-foreground bg-card' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors capitalize flex items-center gap-1.5 ${bottomTab === t ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'}`}
                 >
                   {t === 'network' && <>{networkEntries.length > 0 && <span className="text-muted-foreground">{networkEntries.length}</span>} Network</>}
                   {t === 'console' && (

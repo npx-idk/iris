@@ -2,10 +2,10 @@
 
 ## UI Components
 
-**Always use components from `@workspace/ui`** for every interactive or structural element.
+**Always use components from `@iris/ui`** for every interactive or structural element.
 Never build custom buttons, inputs, cards, badges, labels, or textareas from raw HTML.
 
-Available components (import path `@workspace/ui/components/<name>`):
+Available components (import path `@iris/ui/components/<name>`):
 - `Button` — variants: `default`, `outline`, `secondary`, `ghost`, `destructive`, `link`; sizes: `xs`, `sm`, `default`, `lg`, `icon`
 - `Card`, `CardHeader`, `CardTitle`, `CardDescription`, `CardAction`, `CardContent`, `CardFooter`
 - `Input`
@@ -20,7 +20,7 @@ Available components (import path `@workspace/ui/components/<name>`):
 
 If a component you need is not in the list above, **add it via shadcn** into `packages/ui/src/components/` before using it anywhere:
 ```bash
-pnpm --filter @workspace/ui dlx shadcn@latest add <component-name>
+pnpm --filter @iris/ui dlx shadcn@latest add <component-name>
 ```
 Never copy-paste raw HTML patterns — always go through the shared package.
 

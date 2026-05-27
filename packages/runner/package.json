@@ -11,7 +11,7 @@
     "playwright": "^1.49.1"
   },
   "devDependencies": {
-    "@workspace/typescript-config": "workspace:*",
+    "@iris/typescript-config": "workspace:*",
     "@types/node": "^22.0.0",
     "typescript": "5.9.3"
   }

@@ -4,8 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import type { WorkspaceVariable } from '@/lib/types';
 import { VariableList } from '@/components/projects/VariableList';
-import { Separator } from '@workspace/ui/components/separator';
-import { SidebarTrigger } from '@workspace/ui/components/sidebar';
+import { Separator } from '@iris/ui/components/separator';
+import { SidebarTrigger } from '@iris/ui/components/sidebar';
 
 export default function VariablesPage() {
   const { data: variables = [], refetch } = useQuery({

@@ -3,8 +3,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import { TestRun, RunStatus } from '@/lib/types'
-import { Badge } from '@workspace/ui/components/badge'
-import { Skeleton } from '@workspace/ui/components/skeleton'
+import { Badge } from '@iris/ui/components/badge'
+import { Skeleton } from '@iris/ui/components/skeleton'
 
 interface Props {
   testId: string

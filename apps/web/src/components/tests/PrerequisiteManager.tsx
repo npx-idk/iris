@@ -4,8 +4,12 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import { TestWithSteps, Test } from '@/lib/types'
-import { Button } from '@workspace/ui/components/button'
-import { Card, CardContent } from '@workspace/ui/components/card'
+import { Button } from '@iris/ui/components/animate-ui/components/buttons/button'
+import { Card, CardContent } from '@iris/ui/components/card'
+import {
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent,
+  DropdownMenuRadioGroup, DropdownMenuRadioItem,
+} from '@iris/ui/components/animate-ui/components/radix/dropdown-menu'
 
 interface Props {
   test: TestWithSteps
@@ -61,17 +65,22 @@ export function PrerequisiteManager({ test, onUpdate }: Props) {
           <CardContent className="pt-5">
             <p className="font-medium text-sm text-card-foreground mb-4">Add prerequisite</p>
             <div className="flex gap-3">
-              <select
-                value={selectedId}
-                onChange={(e) => setSelectedId(e.target.value)}
-                className="flex-1 px-3 py-2 border border-input rounded-lg text-sm bg-background
-                           focus:outline-none focus:ring-2 focus:ring-ring"
-              >
-                <option value="">Select a test...</option>
-                {eligible.map((t) => (
-                  <option key={t.id} value={t.id}>{t.name}</option>
-                ))}
-              </select>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="flex-1 justify-start font-normal text-sm">
+                    {selectedId
+                      ? (eligible.find((t) => t.id === selectedId)?.name ?? 'Unknown test')
+                      : 'Select a test...'}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-72">
+                  <DropdownMenuRadioGroup value={selectedId} onValueChange={setSelectedId}>
+                    {eligible.map((t) => (
+                      <DropdownMenuRadioItem key={t.id} value={t.id}>{t.name}</DropdownMenuRadioItem>
+                    ))}
+                  </DropdownMenuRadioGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <Button onClick={handleAdd} disabled={!selectedId || adding} size="sm">
                 {adding ? 'Adding...' : 'Add'}
               </Button>

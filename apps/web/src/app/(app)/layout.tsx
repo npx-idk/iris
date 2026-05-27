@@ -1,6 +1,7 @@
-import { SidebarProvider, SidebarInset } from '@workspace/ui/components/sidebar';
-import { TooltipProvider } from '@workspace/ui/components/tooltip';
+import { SidebarProvider, SidebarInset } from '@iris/ui/components/sidebar';
+import { TooltipProvider } from '@iris/ui/components/tooltip';
 import { AppSidebar } from '@/components/app-sidebar';
+import { ActiveRunsNotification } from '@/components/ActiveRunsNotification';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -9,6 +10,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <AppSidebar />
         <SidebarInset>{children}</SidebarInset>
       </SidebarProvider>
+      <ActiveRunsNotification />
     </TooltipProvider>
   );
 }

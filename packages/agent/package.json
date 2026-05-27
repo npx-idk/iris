@@ -13,7 +13,7 @@
     "zod": "^3.25.0"
   },
   "devDependencies": {
-    "@workspace/typescript-config": "workspace:*",
+    "@iris/typescript-config": "workspace:*",
     "@types/node": "^22.0.0",
     "typescript": "5.9.3"
   }

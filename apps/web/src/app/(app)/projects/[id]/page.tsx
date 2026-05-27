@@ -1,6 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useSession } from '@/lib/auth-client';
@@ -11,27 +14,27 @@ import type { ProjectDetail, ApiKey } from '@/lib/types';
 import { ROUTES } from '@/lib/routes';
 import { can } from '@iris/common';
 import { useQuery } from '@tanstack/react-query';
-import { Button } from '@workspace/ui/components/button';
-import { Input } from '@workspace/ui/components/input';
-import { Textarea } from '@workspace/ui/components/textarea';
-import { Label } from '@workspace/ui/components/label';
+import { Button } from '@iris/ui/components/button';
+import { Input } from '@iris/ui/components/input';
+import { Textarea } from '@iris/ui/components/textarea';
+import { Label } from '@iris/ui/components/label';
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
   CardDescription,
-} from '@workspace/ui/components/card';
-import { Separator } from '@workspace/ui/components/separator';
-import { SidebarTrigger } from '@workspace/ui/components/sidebar';
+} from '@iris/ui/components/card';
+import { Separator } from '@iris/ui/components/separator';
+import { SidebarTrigger } from '@iris/ui/components/sidebar';
 
-type Tab = 'overview' | 'members' | 'api-keys' | 'settings';
+type Tab = 'dashboard' | 'members' | 'api-keys' | 'settings';
 
 export default function ProjectPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { data: session } = useSession();
-  const [tab, setTab] = useState<Tab>('overview');
+  const [tab, setTab] = useState<Tab>('dashboard');
 
   const {
     data: project,
@@ -69,7 +72,7 @@ export default function ProjectPage() {
   }
 
   const tabs: { key: Tab; label: string; show: boolean }[] = [
-    { key: 'overview', label: 'Overview', show: true },
+    { key: 'dashboard', label: 'Dashboard', show: true },
     { key: 'members', label: `Members (${project.members.length})`, show: true },
     { key: 'api-keys', label: 'API Keys', show: !!canManage },
     { key: 'settings', label: 'Settings', show: !!canManage },
@@ -81,18 +84,7 @@ export default function ProjectPage() {
       <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-4">
         <SidebarTrigger className="-ml-1" />
         <Separator orientation="vertical" className="mr-2 h-4" />
-        <nav className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Link href={ROUTES.dashboard} className="hover:text-foreground transition-colors">
-            Projects
-          </Link>
-          <span>/</span>
-          <span className="text-foreground font-medium">{project.name}</span>
-        </nav>
-        <div className="ml-auto">
-          <Button asChild size="sm">
-            <Link href={ROUTES.projectTestNew(id)}>+ New test</Link>
-          </Button>
-        </div>
+        <span className="text-sm font-medium text-foreground">{project.name} — Settings</span>
       </header>
 
       <div className="flex gap-0 border-b border-border px-4">
@@ -112,7 +104,7 @@ export default function ProjectPage() {
       </div>
 
       <div className="p-6">
-        {tab === 'overview' && (
+        {tab === 'dashboard' && (
           <Card>
             <CardHeader>
               <CardTitle>Project details</CardTitle>
@@ -181,6 +173,13 @@ export default function ProjectPage() {
   );
 }
 
+const settingsSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  baseUrl: z.string().min(1, 'Base URL is required').url('Enter a valid URL'),
+  description: z.string().optional(),
+})
+type SettingsValues = z.infer<typeof settingsSchema>
+
 function ProjectSettings({
   project, isOwner, onUpdate, onDelete,
 }: {
@@ -189,31 +188,25 @@ function ProjectSettings({
   onUpdate: () => void;
   onDelete: () => void;
 }) {
-  const [form, setForm] = useState({
-    name: project.name,
-    baseUrl: project.baseUrl,
-    description: project.description ?? '',
-  });
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    setForm({
-      name: project.name,
-      baseUrl: project.baseUrl,
-      description: project.description ?? '',
-    });
-  }, [project]);
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  async function handleSave(e: React.FormEvent) {
-    e.preventDefault();
-    setSaving(true);
+  const { register, handleSubmit, reset, setError, formState: { errors, isSubmitting } } = useForm<SettingsValues>({
+    resolver: zodResolver(settingsSchema as any),
+    mode: 'onBlur',
+    defaultValues: { name: project.name, baseUrl: project.baseUrl, description: project.description ?? '' },
+  });
+
+  useEffect(() => {
+    reset({ name: project.name, baseUrl: project.baseUrl, description: project.description ?? '' });
+  }, [project, reset]);
+
+  async function onSubmit(values: SettingsValues) {
     try {
-      await api.patch(`/projects/${project.id}`, form);
+      await api.patch(`/projects/${project.id}`, values);
       onUpdate();
-    } finally {
-      setSaving(false);
+    } catch (err) {
+      setError('root', { message: err instanceof Error ? err.message : 'Failed to save' });
     }
   }
 
@@ -234,34 +227,25 @@ function ProjectSettings({
           <CardTitle>General settings</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSave} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-1">
               <Label htmlFor="settings-name">Name</Label>
-              <Input
-                id="settings-name"
-                value={form.name}
-                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-              />
+              <Input id="settings-name" {...register('name')} />
+              {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
             </div>
             <div className="space-y-1">
               <Label htmlFor="settings-url">Base URL</Label>
-              <Input
-                id="settings-url"
-                value={form.baseUrl}
-                onChange={(e) => setForm((f) => ({ ...f, baseUrl: e.target.value }))}
-              />
+              <Input id="settings-url" {...register('baseUrl')} />
+              {errors.baseUrl && <p className="text-xs text-destructive">{errors.baseUrl.message}</p>}
             </div>
             <div className="space-y-1">
               <Label htmlFor="settings-desc">Description</Label>
-              <Textarea
-                id="settings-desc"
-                value={form.description}
-                onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-              />
+              <Textarea id="settings-desc" {...register('description')} />
             </div>
+            {errors.root && <p className="text-xs text-destructive">{errors.root.message}</p>}
             <div className="flex justify-end">
-              <Button type="submit" disabled={saving}>
-                {saving ? 'Saving...' : 'Save changes'}
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? 'Saving...' : 'Save changes'}
               </Button>
             </div>
           </form>

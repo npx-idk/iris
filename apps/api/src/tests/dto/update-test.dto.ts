@@ -25,4 +25,8 @@ export class UpdateTestDto {
   @IsOptional()
   @IsBoolean()
   continueOnFailure?: boolean
+
+  @IsOptional()
+  @IsString()
+  folderId?: string | null
 }

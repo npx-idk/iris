@@ -54,7 +54,7 @@ mkdir -p packages/database/prisma
     "@prisma/client": "^6.0.0"
   },
   "devDependencies": {
-    "@workspace/typescript-config": "workspace:*",
+    "@iris/typescript-config": "workspace:*",
     "prisma": "^6.0.0",
     "tsx": "^4.19.1",
     "typescript": "5.9.3"
@@ -65,7 +65,7 @@ mkdir -p packages/database/prisma
 **`packages/database/tsconfig.json`**
 ```json
 {
-  "extends": "@workspace/typescript-config/base.json",
+  "extends": "@iris/typescript-config/base.json",
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": "./src"
@@ -204,8 +204,8 @@ mkdir -p apps/api/src/{auth,prisma,common}
     "@nestjs/schematics": "^11.0.0",
     "@types/express": "^5.0.0",
     "@types/node": "^22.0.0",
-    "@workspace/eslint-config": "workspace:*",
-    "@workspace/typescript-config": "workspace:*",
+    "@iris/eslint-config": "workspace:*",
+    "@iris/typescript-config": "workspace:*",
     "typescript": "5.9.3"
   }
 }
@@ -214,7 +214,7 @@ mkdir -p apps/api/src/{auth,prisma,common}
 **`apps/api/tsconfig.json`**
 ```json
 {
-  "extends": "@workspace/typescript-config/nestjs.json",
+  "extends": "@iris/typescript-config/nestjs.json",
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": "./src",

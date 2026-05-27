@@ -12,11 +12,14 @@
     "db:migrate": "pnpm --filter @iris/database migrate",
     "db:studio": "pnpm --filter @iris/database studio",
     "docker:up": "docker compose up -d",
-    "docker:down": "docker compose down"
+    "docker:down": "docker compose down",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@iris/eslint-config": "workspace:*",
     "@iris/typescript-config": "workspace:*",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.5",
     "prettier": "^3.8.1",
     "prettier-plugin-tailwindcss": "^0.7.2",
     "turbo": "^2.8.17",

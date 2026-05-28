@@ -1,34 +1,31 @@
 import {
-  Injectable, NotFoundException, ForbiddenException,
-  BadRequestException, ConflictException,
-} from '@nestjs/common'
-import { prisma } from '../prisma/prisma'
-import { CreateTestDto } from './dto/create-test.dto'
-import { UpdateTestDto } from './dto/update-test.dto'
-import { UpsertStepsDto } from './dto/upsert-steps.dto'
-import { ReorderTestsDto } from './dto/reorder-tests.dto'
-import { AddPrerequisiteDto } from './dto/add-prerequisite.dto'
-import { ImportSuiteDto } from './dto/import-suite.dto'
-import { wouldCreateCycle } from './prerequisite.util'
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ConflictException,
+} from "@nestjs/common"
+import { prisma } from "../prisma/prisma"
+import { ProjectAccessService } from "../common/project-access.service"
+import { CreateTestDto } from "./dto/create-test.dto"
+import { UpdateTestDto } from "./dto/update-test.dto"
+import { UpsertStepsDto } from "./dto/upsert-steps.dto"
+import { ReorderTestsDto } from "./dto/reorder-tests.dto"
+import { AddPrerequisiteDto } from "./dto/add-prerequisite.dto"
+import { ImportSuiteDto } from "./dto/import-suite.dto"
+import { wouldCreateCycle } from "./prerequisite.util"
 
 @Injectable()
 export class TestsService {
+  constructor(private projectAccess: ProjectAccessService) {}
 
-  private async verifyProjectAccess(projectId: string, userId: string, write = false) {
-    const member = await prisma.projectMember.findUnique({
-      where: { userId_projectId: { userId, projectId } },
-    })
-    if (!member) throw new ForbiddenException('Not a project member')
-    if (write && member.role === 'VIEWER') {
-      throw new ForbiddenException('Viewers cannot modify tests')
-    }
-    return member
-  }
-
-  private async getTestAndVerify(testId: string, userId: string, write = false) {
+  private async getTestAndVerify(
+    testId: string,
+    userId: string,
+    write = false
+  ) {
     const test = await prisma.test.findUnique({ where: { id: testId } })
-    if (!test) throw new NotFoundException('Test not found')
-    await this.verifyProjectAccess(test.projectId, userId, write)
+    if (!test) throw new NotFoundException("Test not found")
+    await this.projectAccess.verifyMember(test.projectId, userId, write)
     return test
   }
 
@@ -44,26 +41,26 @@ export class TestsService {
       include: {
         _count: { select: { steps: true, runs: true } },
         runs: {
-          orderBy: { createdAt: 'desc' },
+          orderBy: { createdAt: "desc" },
           take: 1,
           select: { id: true, status: true, createdAt: true },
         },
         folder: { select: { id: true, name: true, parentId: true } },
         project: { select: { id: true, name: true } },
       },
-      orderBy: [{ projectId: 'asc' }, { order: 'asc' }],
+      orderBy: [{ projectId: "asc" }, { order: "asc" }],
     })
   }
 
   async findAll(projectId: string, userId: string) {
-    await this.verifyProjectAccess(projectId, userId)
+    await this.projectAccess.verifyMember(projectId, userId)
 
     return prisma.test.findMany({
       where: { projectId },
       include: {
         _count: { select: { steps: true, runs: true } },
         runs: {
-          orderBy: { createdAt: 'desc' },
+          orderBy: { createdAt: "desc" },
           take: 1,
           select: { id: true, status: true, createdAt: true },
         },
@@ -72,7 +69,7 @@ export class TestsService {
         },
         folder: { select: { id: true, name: true, parentId: true } },
       },
-      orderBy: { order: 'asc' },
+      orderBy: { order: "asc" },
     })
   }
 
@@ -80,31 +77,35 @@ export class TestsService {
     const test = await prisma.test.findUnique({
       where: { id: testId },
       include: {
-        steps: { orderBy: { stepIndex: 'asc' } },
+        steps: { orderBy: { stepIndex: "asc" } },
         prerequisites: {
-          include: { steps: { orderBy: { stepIndex: 'asc' } } },
-          orderBy: { order: 'asc' },
+          include: { steps: { orderBy: { stepIndex: "asc" } } },
+          orderBy: { order: "asc" },
         },
         prerequisiteOf: { select: { id: true, name: true } },
         runs: {
-          orderBy: { createdAt: 'desc' },
+          orderBy: { createdAt: "desc" },
           take: 10,
           select: {
-            id: true, status: true, totalSteps: true,
-            passedSteps: true, createdAt: true, finishedAt: true,
+            id: true,
+            status: true,
+            totalSteps: true,
+            passedSteps: true,
+            createdAt: true,
+            finishedAt: true,
           },
         },
         _count: { select: { runs: true } },
       },
     })
 
-    if (!test) throw new NotFoundException('Test not found')
-    await this.verifyProjectAccess(test.projectId, userId)
+    if (!test) throw new NotFoundException("Test not found")
+    await this.projectAccess.verifyMember(test.projectId, userId)
     return test
   }
 
   async create(projectId: string, userId: string, dto: CreateTestDto) {
-    await this.verifyProjectAccess(projectId, userId, true)
+    await this.projectAccess.verifyMember(projectId, userId, true)
 
     const maxOrder = await prisma.test.aggregate({
       where: { projectId },
@@ -129,10 +130,12 @@ export class TestsService {
     const test = await this.getTestAndVerify(testId, userId, true)
 
     if (dto.folderId != null) {
-      const folder = await prisma.folder.findUnique({ where: { id: dto.folderId } })
-      if (!folder) throw new NotFoundException('Folder not found')
+      const folder = await prisma.folder.findUnique({
+        where: { id: dto.folderId },
+      })
+      if (!folder) throw new NotFoundException("Folder not found")
       if (folder.projectId !== test.projectId) {
-        throw new BadRequestException('Folder does not belong to this project')
+        throw new BadRequestException("Folder does not belong to this project")
       }
     }
 
@@ -148,10 +151,10 @@ export class TestsService {
     })
 
     if (dependents.length > 0) {
-      const names = dependents.map((d) => `"${d.name}"`).join(', ')
+      const names = dependents.map((d) => `"${d.name}"`).join(", ")
       throw new ConflictException(
         `Cannot delete — this test is a prerequisite for: ${names}. ` +
-        `Remove those dependencies first.`
+          `Remove those dependencies first.`
       )
     }
 
@@ -160,7 +163,7 @@ export class TestsService {
 
   async duplicate(testId: string, userId: string) {
     const test = await this.findOne(testId, userId)
-    await this.verifyProjectAccess(test.projectId, userId, true)
+    await this.projectAccess.verifyMember(test.projectId, userId, true)
 
     const maxOrder = await prisma.test.aggregate({
       where: { projectId: test.projectId },
@@ -185,12 +188,12 @@ export class TestsService {
           })),
         },
       },
-      include: { steps: { orderBy: { stepIndex: 'asc' } } },
+      include: { steps: { orderBy: { stepIndex: "asc" } } },
     })
   }
 
   async reorder(projectId: string, userId: string, dto: ReorderTestsDto) {
-    await this.verifyProjectAccess(projectId, userId, true)
+    await this.projectAccess.verifyMember(projectId, userId, true)
 
     const testIds = dto.tests.map((t) => t.id)
     const tests = await prisma.test.findMany({
@@ -199,7 +202,9 @@ export class TestsService {
     })
 
     if (tests.length !== testIds.length) {
-      throw new BadRequestException('One or more tests do not belong to this project')
+      throw new BadRequestException(
+        "One or more tests do not belong to this project"
+      )
     }
 
     await prisma.$transaction(
@@ -211,20 +216,26 @@ export class TestsService {
     return this.findAll(projectId, userId)
   }
 
-  async addPrerequisite(testId: string, userId: string, dto: AddPrerequisiteDto) {
+  async addPrerequisite(
+    testId: string,
+    userId: string,
+    dto: AddPrerequisiteDto
+  ) {
     const test = await this.getTestAndVerify(testId, userId, true)
     const { prerequisiteId } = dto
 
     if (testId === prerequisiteId) {
-      throw new BadRequestException('A test cannot be its own prerequisite')
+      throw new BadRequestException("A test cannot be its own prerequisite")
     }
 
     const prereq = await prisma.test.findUnique({
       where: { id: prerequisiteId },
     })
-    if (!prereq) throw new NotFoundException('Prerequisite test not found')
+    if (!prereq) throw new NotFoundException("Prerequisite test not found")
     if (prereq.projectId !== test.projectId) {
-      throw new BadRequestException('Prerequisites must belong to the same project')
+      throw new BadRequestException(
+        "Prerequisites must belong to the same project"
+      )
     }
 
     const existing = await prisma.test.findFirst({
@@ -234,7 +245,7 @@ export class TestsService {
       },
     })
     if (existing) {
-      throw new ConflictException('This prerequisite is already added')
+      throw new ConflictException("This prerequisite is already added")
     }
 
     const hasCycle = await wouldCreateCycle(
@@ -246,12 +257,12 @@ export class TestsService {
           select: { prerequisites: { select: { id: true } } },
         })
         return t?.prerequisites.map((p) => p.id) ?? []
-      },
+      }
     )
 
     if (hasCycle) {
       throw new BadRequestException(
-        'Cannot add this prerequisite — it would create a circular dependency'
+        "Cannot add this prerequisite — it would create a circular dependency"
       )
     }
 
@@ -263,7 +274,11 @@ export class TestsService {
     return this.findOne(testId, userId)
   }
 
-  async removePrerequisite(testId: string, userId: string, prerequisiteId: string) {
+  async removePrerequisite(
+    testId: string,
+    userId: string,
+    prerequisiteId: string
+  ) {
     await this.getTestAndVerify(testId, userId, true)
 
     await prisma.test.update({
@@ -273,15 +288,15 @@ export class TestsService {
   }
 
   async exportSuite(projectId: string, userId: string) {
-    await this.verifyProjectAccess(projectId, userId)
+    await this.projectAccess.verifyMember(projectId, userId)
 
     const tests = await prisma.test.findMany({
       where: { projectId },
       include: {
-        steps: { orderBy: { stepIndex: 'asc' } },
+        steps: { orderBy: { stepIndex: "asc" } },
         prerequisites: { select: { name: true } },
       },
-      orderBy: { order: 'asc' },
+      orderBy: { order: "asc" },
     })
 
     return {
@@ -308,7 +323,7 @@ export class TestsService {
   }
 
   async importSuite(projectId: string, userId: string, dto: ImportSuiteDto) {
-    await this.verifyProjectAccess(projectId, userId, true)
+    await this.projectAccess.verifyMember(projectId, userId, true)
 
     const maxOrder = await prisma.test.aggregate({
       where: { projectId },
@@ -316,7 +331,6 @@ export class TestsService {
     })
     let nextOrder = (maxOrder._max.order ?? -1) + 1
 
-    // Create all tests first (without prerequisites)
     const created: Array<{ id: string; name: string }> = []
     for (const t of dto.tests) {
       const test = await prisma.test.create({
@@ -342,7 +356,6 @@ export class TestsService {
       created.push({ id: test.id, name: test.name })
     }
 
-    // Wire up prerequisites by name match within this project
     const allProjectTests = await prisma.test.findMany({
       where: { projectId },
       select: { id: true, name: true },
@@ -384,7 +397,7 @@ export class TestsService {
 
     return prisma.testStep.findMany({
       where: { testId },
-      orderBy: { stepIndex: 'asc' },
+      orderBy: { stepIndex: "asc" },
     })
   }
 }

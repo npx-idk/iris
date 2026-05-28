@@ -1,11 +1,17 @@
-import { ConflictException, NotFoundException } from '@nestjs/common'
-import { createStagehand } from '@iris/agent'
-import type { BrowserTab, BrowserEvent } from '@iris/common'
-import { DispatchInputDto } from './dto/dispatch-input.dto'
+import { ConflictException, NotFoundException } from "@nestjs/common"
+import { createStagehand } from "@iris/agent"
+import type { BrowserTab, BrowserEvent } from "@iris/common"
+import { DispatchInputDto } from "./dto/dispatch-input.dto"
 
 type StagehandSession = Awaited<ReturnType<typeof createStagehand>>
 
-type ReqMeta = { method: string; url: string; headers: Record<string, string>; postData?: string; startTime: number }
+type ReqMeta = {
+  method: string
+  url: string
+  headers: Record<string, string>
+  postData?: string
+  startTime: number
+}
 
 export class BrowserSession {
   readonly id: string
@@ -23,7 +29,7 @@ export class BrowserSession {
     testId: string,
     userId: string,
     stagehand: StagehandSession,
-    onEvent: (event: BrowserEvent) => void,
+    onEvent: (event: BrowserEvent) => void
   ) {
     this.id = id
     this.testId = testId
@@ -37,59 +43,96 @@ export class BrowserSession {
     if (tId && this.listenedTargets.has(tId)) return
     if (tId) this.listenedTargets.add(tId)
 
-    try {
-      p.on('console', (msg: any) => {
-        const level = msg.type() as string
-        if (level === 'debug') return
-        this.onEvent({ sessionId: this.id, kind: 'console', level, message: msg.text(), timestamp: Date.now() })
-      })
-    } catch { /* ignore */ }
+    this.setupConsoleListener(p)
 
     const cdpSession = p.mainSession
     if (!cdpSession) return
 
     // Fire-and-forget: awaiting Network.enable blocks all subsequent CDP commands
     // for this session in Chrome's per-session queue, causing input events to hang.
-    void p.sendCDP('Network.enable').catch(() => {})
+    void p.sendCDP("Network.enable").catch(() => {})
 
-    cdpSession.on('Runtime.exceptionThrown', (evt: any) => {
-      const msg = evt?.exceptionDetails?.exception?.description
-        ?? evt?.exceptionDetails?.text ?? 'Unknown error'
-      this.onEvent({ sessionId: this.id, kind: 'exception', message: msg, timestamp: Date.now() })
+    this.setupExceptionListener(cdpSession)
+    this.setupNavigationListener(cdpSession)
+    this.setupNetworkListeners(cdpSession, p)
+  }
+
+  private setupConsoleListener(p: any): void {
+    try {
+      p.on("console", (msg: any) => {
+        const level = msg.type() as string
+        if (level === "debug") return
+        this.onEvent({
+          sessionId: this.id,
+          kind: "console",
+          level,
+          message: msg.text(),
+          timestamp: Date.now(),
+        })
+      })
+    } catch {
+      /* ignore */
+    }
+  }
+
+  private setupExceptionListener(cdpSession: any): void {
+    cdpSession.on("Runtime.exceptionThrown", (evt: any) => {
+      const msg =
+        evt?.exceptionDetails?.exception?.description ??
+        evt?.exceptionDetails?.text ??
+        "Unknown error"
+      this.onEvent({
+        sessionId: this.id,
+        kind: "exception",
+        message: msg,
+        timestamp: Date.now(),
+      })
     })
+  }
 
-    cdpSession.on('Page.frameNavigated', (evt: any) => {
+  private setupNavigationListener(cdpSession: any): void {
+    cdpSession.on("Page.frameNavigated", (evt: any) => {
       if (evt?.frame?.parentId) return
       const url = evt?.frame?.url
-      if (!url || url === 'about:blank') return
-      this.onEvent({ sessionId: this.id, kind: 'navigation', message: url, timestamp: Date.now() })
+      if (!url || url === "about:blank") return
+      this.onEvent({
+        sessionId: this.id,
+        kind: "navigation",
+        message: url,
+        timestamp: Date.now(),
+      })
     })
+  }
 
+  private setupNetworkListeners(cdpSession: any, p: any): void {
     const reqData = new Map<string, ReqMeta>()
 
-    cdpSession.on('Network.requestWillBeSent', (evt: any) => {
+    cdpSession.on("Network.requestWillBeSent", (evt: any) => {
       if (!evt?.requestId) return
       if (reqData.size > 500) {
         const oldest = reqData.keys().next().value
         if (oldest) reqData.delete(oldest)
       }
       reqData.set(evt.requestId, {
-        method: evt.request?.method ?? 'GET',
-        url: evt.request?.url ?? '',
+        method: evt.request?.method ?? "GET",
+        url: evt.request?.url ?? "",
         headers: evt.request?.headers ?? {},
         postData: evt.request?.postData,
         startTime: Date.now(),
       })
     })
 
-    cdpSession.on('Network.responseReceived', (evt: any) => {
-      const type = (evt?.type ?? '').toLowerCase()
+    cdpSession.on("Network.responseReceived", (evt: any) => {
+      const type = (evt?.type ?? "").toLowerCase()
       const req = reqData.get(evt?.requestId)
       if (!req) return
-      if (!['xhr', 'fetch'].includes(type)) { reqData.delete(evt.requestId); return }
+      if (!["xhr", "fetch"].includes(type)) {
+        reqData.delete(evt.requestId)
+        return
+      }
       this.onEvent({
         sessionId: this.id,
-        kind: 'network.response',
+        kind: "network.response",
         requestId: evt.requestId,
         method: req.method,
         url: req.url,
@@ -102,27 +145,44 @@ export class BrowserSession {
       })
     })
 
-    cdpSession.on('Network.loadingFinished', async (evt: any) => {
+    cdpSession.on("Network.loadingFinished", async (evt: any) => {
       const req = reqData.get(evt?.requestId)
       if (!req) return
       const duration = Date.now() - req.startTime
       reqData.delete(evt.requestId)
 
-      let body = ''
+      let body = ""
       let base64Encoded = false
       try {
-        const r = await p.sendCDP('Network.getResponseBody', { requestId: evt.requestId }) as any
-        body = typeof r.body === 'string' ? r.body.slice(0, 50_000) : ''
+        const r = (await p.sendCDP("Network.getResponseBody", {
+          requestId: evt.requestId,
+        })) as any
+        body = typeof r.body === "string" ? r.body.slice(0, 50_000) : ""
         base64Encoded = r.base64Encoded ?? false
-      } catch { /* body unavailable */ }
+      } catch {
+        /* body unavailable */
+      }
 
-      this.onEvent({ sessionId: this.id, kind: 'network.body', requestId: evt.requestId, body, base64Encoded, duration, timestamp: Date.now() })
+      this.onEvent({
+        sessionId: this.id,
+        kind: "network.body",
+        requestId: evt.requestId,
+        body,
+        base64Encoded,
+        duration,
+        timestamp: Date.now(),
+      })
     })
 
-    cdpSession.on('Network.loadingFailed', (evt: any) => { reqData.delete(evt?.requestId) })
+    cdpSession.on("Network.loadingFailed", (evt: any) => {
+      reqData.delete(evt?.requestId)
+    })
   }
 
-  startScreencast(onFrame: (frameBase64: string) => void, onNewTab: () => void): void {
+  startScreencast(
+    onFrame: (frameBase64: string) => void,
+    onNewTab: () => void
+  ): void {
     let frameInFlight = false
     this.screenshotTimer = setInterval(async () => {
       if (frameInFlight) return
@@ -140,11 +200,14 @@ export class BrowserSession {
 
         const p = this.stagehand.context.activePage()
         if (p) {
-          const buf = await p.screenshot({ type: 'jpeg', quality: 40 } as any)
-          onFrame(buf.toString('base64'))
+          const buf = await p.screenshot({ type: "jpeg", quality: 40 } as any)
+          onFrame(buf.toString("base64"))
         }
-      } catch { /* page may not be ready */ }
-      finally { frameInFlight = false }
+      } catch {
+        /* page may not be ready */
+      } finally {
+        frameInFlight = false
+      }
     }, 250)
   }
 
@@ -173,54 +236,71 @@ export class BrowserSession {
     const page = this.stagehand.context.activePage()
     if (!page) return
     let target = url.trim()
-    if (target && !/^https?:\/\//i.test(target) && !target.startsWith('about:')) {
+    if (
+      target &&
+      !/^https?:\/\//i.test(target) &&
+      !target.startsWith("about:")
+    ) {
       target = `https://${target}`
     }
-    await page.goto(target, { waitUntil: 'domcontentloaded', timeoutMs: 8000 }).catch(() => {})
+    await page
+      .goto(target, { waitUntil: "domcontentloaded", timeoutMs: 8000 })
+      .catch(() => {})
   }
 
   async goBack(): Promise<void> {
     const page = this.stagehand.context.activePage()
     if (!page) return
-    await page.goBack({ waitUntil: 'domcontentloaded', timeoutMs: 8000 }).catch(() => {})
+    await page
+      .goBack({ waitUntil: "domcontentloaded", timeoutMs: 8000 })
+      .catch(() => {})
   }
 
   async goForward(): Promise<void> {
     const page = this.stagehand.context.activePage()
     if (!page) return
-    await page.goForward({ waitUntil: 'domcontentloaded', timeoutMs: 8000 }).catch(() => {})
+    await page
+      .goForward({ waitUntil: "domcontentloaded", timeoutMs: 8000 })
+      .catch(() => {})
   }
 
   async reload(): Promise<void> {
     const page = this.stagehand.context.activePage()
     if (!page) return
-    await page.reload({ waitUntil: 'domcontentloaded', timeoutMs: 8000 }).catch(() => {})
+    await page
+      .reload({ waitUntil: "domcontentloaded", timeoutMs: 8000 })
+      .catch(() => {})
   }
 
   async dispatchInput(dto: DispatchInputDto): Promise<void> {
     const page = this.stagehand.context.activePage()
     if (!page) return
 
-    const mouseTypes = ['mousePressed', 'mouseReleased', 'mouseMoved', 'mouseWheel']
-    const keyTypes   = ['keyDown', 'keyUp', 'char']
+    const mouseTypes = [
+      "mousePressed",
+      "mouseReleased",
+      "mouseMoved",
+      "mouseWheel",
+    ]
+    const keyTypes = ["keyDown", "keyUp", "char"]
 
     if (mouseTypes.includes(dto.type)) {
-      await page.sendCDP('Input.dispatchMouseEvent', {
+      await page.sendCDP("Input.dispatchMouseEvent", {
         type: dto.type,
         x: dto.x ?? 0,
         y: dto.y ?? 0,
-        button: dto.button ?? 'none',
+        button: dto.button ?? "none",
         clickCount: dto.clickCount ?? 0,
         deltaX: dto.deltaX ?? 0,
         deltaY: dto.deltaY ?? 0,
         modifiers: dto.modifiers ?? 0,
       })
     } else if (keyTypes.includes(dto.type)) {
-      await page.sendCDP('Input.dispatchKeyEvent', {
+      await page.sendCDP("Input.dispatchKeyEvent", {
         type: dto.type,
-        key: dto.key ?? '',
-        text: dto.text ?? '',
-        code: dto.code ?? '',
+        key: dto.key ?? "",
+        text: dto.text ?? "",
+        code: dto.code ?? "",
         modifiers: dto.modifiers ?? 0,
         windowsVirtualKeyCode: dto.windowsVirtualKeyCode ?? 0,
         nativeVirtualKeyCode: dto.windowsVirtualKeyCode ?? 0,
@@ -236,20 +316,37 @@ export class BrowserSession {
     const page = this.stagehand.context.activePage()
     if (!page) return { cookies: [], localStorage: {}, sessionStorage: {} }
 
-    const evalStorage = (type: 'localStorage' | 'sessionStorage') =>
+    const evalStorage = (type: "localStorage" | "sessionStorage") =>
       `(()=>{try{const s=window.${type},d={};for(let i=0;i<s.length;i++){const k=s.key(i);d[k]=s.getItem(k)}return JSON.stringify(d)}catch{return '{}'}})()`
 
     const [cookiesR, localR, sessionR] = await Promise.allSettled([
-      page.sendCDP('Network.getCookies'),
-      page.sendCDP('Runtime.evaluate', { expression: evalStorage('localStorage'), returnByValue: true }),
-      page.sendCDP('Runtime.evaluate', { expression: evalStorage('sessionStorage'), returnByValue: true }),
+      page.sendCDP("Network.getCookies"),
+      page.sendCDP("Runtime.evaluate", {
+        expression: evalStorage("localStorage"),
+        returnByValue: true,
+      }),
+      page.sendCDP("Runtime.evaluate", {
+        expression: evalStorage("sessionStorage"),
+        returnByValue: true,
+      }),
     ])
 
-    const cookies = cookiesR.status === 'fulfilled' ? (cookiesR.value as any).cookies ?? [] : []
+    const cookies =
+      cookiesR.status === "fulfilled"
+        ? ((cookiesR.value as any).cookies ?? [])
+        : []
     let localStorage: Record<string, string> = {}
     let sessionStorage: Record<string, string> = {}
-    try { if (localR.status === 'fulfilled') localStorage = JSON.parse((localR.value as any).result?.value ?? '{}') } catch {}
-    try { if (sessionR.status === 'fulfilled') sessionStorage = JSON.parse((sessionR.value as any).result?.value ?? '{}') } catch {}
+    try {
+      if (localR.status === "fulfilled")
+        localStorage = JSON.parse((localR.value as any).result?.value ?? "{}")
+    } catch {}
+    try {
+      if (sessionR.status === "fulfilled")
+        sessionStorage = JSON.parse(
+          (sessionR.value as any).result?.value ?? "{}"
+        )
+    } catch {}
 
     return { cookies, localStorage, sessionStorage }
   }
@@ -258,7 +355,9 @@ export class BrowserSession {
     const page = this.stagehand.context.activePage()
     if (!page) return null
 
-    const wsUrl = (this.stagehand.context.conn as any)?.ws?.url as string | undefined
+    const wsUrl = (this.stagehand.context.conn as any)?.ws?.url as
+      | string
+      | undefined
     if (!wsUrl) return null
 
     const portMatch = wsUrl.match(/:(\d+)\//)
@@ -270,37 +369,49 @@ export class BrowserSession {
       // Raw fetch is intentional here: this hits the local Chrome debug HTTP endpoint,
       // not an external API, so using Axios would add unnecessary overhead.
       const resp = await fetch(`http://127.0.0.1:${port}/json/list`)
-      const targets = await resp.json() as Array<{ id: string; devtoolsFrontendUrl?: string }>
+      const targets = (await resp.json()) as Array<{
+        id: string
+        devtoolsFrontendUrl?: string
+      }>
       const target = targets.find((t) => t.id === targetId)
       if (target?.devtoolsFrontendUrl) {
         const frontendUrl = target.devtoolsFrontendUrl
-        const url = frontendUrl.startsWith('http') ? frontendUrl : `http://127.0.0.1:${port}${frontendUrl}`
+        const url = frontendUrl.startsWith("http")
+          ? frontendUrl
+          : `http://127.0.0.1:${port}${frontendUrl}`
         return { url }
       }
-    } catch { /* fall through */ }
+    } catch {
+      /* fall through */
+    }
 
-    return { url: `http://127.0.0.1:${port}/devtools/inspector.html?ws=127.0.0.1:${port}/devtools/page/${targetId}` }
+    return {
+      url: `http://127.0.0.1:${port}/devtools/inspector.html?ws=127.0.0.1:${port}/devtools/page/${targetId}`,
+    }
   }
 
   async newTab(url?: string): Promise<{ targetId: string }> {
-    const newPage = await this.stagehand.context.newPage(url ?? 'about:blank')
+    const newPage = await this.stagehand.context.newPage(url ?? "about:blank")
     void this.attachPage(newPage as any)
     this.stagehand.context.setActivePage(newPage)
     return { targetId: newPage.targetId() }
   }
 
   activateTab(targetId: string): void {
-    const page = this.stagehand.context.pages().find((p) => p.targetId() === targetId)
-    if (!page) throw new NotFoundException('Tab not found')
+    const page = this.stagehand.context
+      .pages()
+      .find((p) => p.targetId() === targetId)
+    if (!page) throw new NotFoundException("Tab not found")
     this.stagehand.context.setActivePage(page)
   }
 
   async closeTab(targetId: string): Promise<void> {
     const pages = this.stagehand.context.pages()
-    if (pages.length <= 1) throw new ConflictException('Cannot close the last tab')
+    if (pages.length <= 1)
+      throw new ConflictException("Cannot close the last tab")
 
     const page = pages.find((p) => p.targetId() === targetId)
-    if (!page) throw new NotFoundException('Tab not found')
+    if (!page) throw new NotFoundException("Tab not found")
 
     const activePage = this.stagehand.context.activePage()
     if (activePage?.targetId() === targetId) {
@@ -313,8 +424,11 @@ export class BrowserSession {
   }
 
   async gotoUrl(url: string): Promise<void> {
-    const page = this.stagehand.context.activePage() ?? this.stagehand.context.pages()[0]
-    await page?.goto(url, { waitUntil: 'domcontentloaded', timeoutMs: 15000 }).catch(() => {})
+    const page =
+      this.stagehand.context.activePage() ?? this.stagehand.context.pages()[0]
+    await page
+      ?.goto(url, { waitUntil: "domcontentloaded", timeoutMs: 15000 })
+      .catch(() => {})
   }
 
   get stagehandInstance(): StagehandSession {

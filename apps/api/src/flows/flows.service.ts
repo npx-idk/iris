@@ -1,12 +1,20 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common'
-import { prisma } from '../prisma/prisma'
-import { CreateFlowDto } from './dto/create-flow.dto'
-import { UpdateFlowDto } from './dto/update-flow.dto'
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from "@nestjs/common"
+import { prisma } from "../prisma/prisma"
+import { ProjectAccessService } from "../common/project-access.service"
+import { CreateFlowDto } from "./dto/create-flow.dto"
+import { UpdateFlowDto } from "./dto/update-flow.dto"
 
 type FlowNode = { id: string; data: { testId: string } }
 type FlowEdge = { source: string; target: string }
 
-function topologicalSort(nodes: FlowNode[], edges: FlowEdge[]): { nodeId: string; testId: string }[] {
+function topologicalSort(
+  nodes: FlowNode[],
+  edges: FlowEdge[]
+): { nodeId: string; testId: string }[] {
   const nodeMap = new Map(nodes.map((n) => [n.id, n]))
   const inDegree = new Map<string, number>(nodes.map((n) => [n.id, 0]))
   const adj = new Map<string, string[]>(nodes.map((n) => [n.id, []]))
@@ -35,27 +43,24 @@ function topologicalSort(nodes: FlowNode[], edges: FlowEdge[]): { nodeId: string
 
 @Injectable()
 export class FlowsService {
-  private async verifyProjectAccess(projectId: string, userId: string, write = false) {
-    const member = await prisma.projectMember.findUnique({
-      where: { userId_projectId: { userId, projectId } },
-    })
-    if (!member) throw new ForbiddenException('Not a project member')
-    if (write && member.role === 'VIEWER') throw new ForbiddenException('Viewers cannot modify flows')
-    return member
-  }
+  constructor(private projectAccess: ProjectAccessService) {}
 
-  private async getFlowAndVerify(flowId: string, userId: string, write = false) {
+  private async getFlowAndVerify(
+    flowId: string,
+    userId: string,
+    write = false
+  ) {
     const flow = await prisma.flow.findUnique({ where: { id: flowId } })
-    if (!flow) throw new NotFoundException('Flow not found')
-    await this.verifyProjectAccess(flow.projectId, userId, write)
+    if (!flow) throw new NotFoundException("Flow not found")
+    await this.projectAccess.verifyMember(flow.projectId, userId, write)
     return flow
   }
 
   async findAll(projectId: string, userId: string) {
-    await this.verifyProjectAccess(projectId, userId)
+    await this.projectAccess.verifyMember(projectId, userId)
     return prisma.flow.findMany({
       where: { projectId },
-      orderBy: { updatedAt: 'desc' },
+      orderBy: { updatedAt: "desc" },
       select: { id: true, name: true, createdAt: true, updatedAt: true },
     })
   }
@@ -65,7 +70,7 @@ export class FlowsService {
   }
 
   async create(projectId: string, userId: string, dto: CreateFlowDto) {
-    await this.verifyProjectAccess(projectId, userId, true)
+    await this.projectAccess.verifyMember(projectId, userId, true)
     return prisma.flow.create({
       data: { name: dto.name, projectId },
     })
@@ -92,9 +97,10 @@ export class FlowsService {
     const flow = await this.getFlowAndVerify(flowId, userId)
     const nodes = (flow.nodes as unknown as FlowNode[]) ?? []
     const edges = (flow.edges as unknown as FlowEdge[]) ?? []
-    if (nodes.length === 0) throw new BadRequestException('Flow has no nodes')
+    if (nodes.length === 0) throw new BadRequestException("Flow has no nodes")
     const order = topologicalSort(nodes, edges)
-    if (order.length !== nodes.length) throw new BadRequestException('Flow contains a cycle')
+    if (order.length !== nodes.length)
+      throw new BadRequestException("Flow contains a cycle")
     return { order }
   }
 }

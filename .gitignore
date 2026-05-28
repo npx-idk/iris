@@ -47,3 +47,7 @@ npm-debug.log*
 packages/*/src/**/*.js
 packages/*/src/**/*.d.ts
 packages/*/src/**/*.d.ts.map
+
+
+**/*.tsbuildinfo
+

@@ -1,22 +1,27 @@
-import { Injectable, ForbiddenException } from '@nestjs/common'
-import { explorePage } from '@iris/agent'
-import { prisma } from '../prisma/prisma'
-import { ExploreDto } from './dto/explore.dto'
+import { Injectable } from "@nestjs/common"
+import { explorePage } from "@iris/agent"
+import { prisma } from "../prisma/prisma"
+import { ProjectAccessService } from "../common/project-access.service"
+import { WorkspaceService } from "../workspace/workspace.service"
+import { ExploreDto } from "./dto/explore.dto"
 
 @Injectable()
 export class ExploreService {
-  async explore(projectId: string, userId: string, dto: ExploreDto) {
-    const member = await prisma.projectMember.findUnique({
-      where: { userId_projectId: { userId, projectId } },
-    })
-    if (!member) throw new ForbiddenException('Not a project member')
+  constructor(
+    private projectAccess: ProjectAccessService,
+    private workspace: WorkspaceService
+  ) {}
 
-    // Resolve prerequisite test steps (for authenticated page exploration)
-    let prerequisite: { startUrl?: string; steps: Array<{ instruction: string }> } | undefined
+  async explore(projectId: string, userId: string, dto: ExploreDto) {
+    await this.projectAccess.verifyMember(projectId, userId)
+
+    let prerequisite:
+      | { startUrl?: string; steps: Array<{ instruction: string }> }
+      | undefined
     if (dto.prerequisiteTestId) {
       const prereqTest = await prisma.test.findFirst({
         where: { id: dto.prerequisiteTestId, projectId },
-        include: { steps: { orderBy: { stepIndex: 'asc' } } },
+        include: { steps: { orderBy: { stepIndex: "asc" } } },
       })
       if (prereqTest) {
         prerequisite = {
@@ -26,19 +31,14 @@ export class ExploreService {
       }
     }
 
-    // Fetch workspace variables only when needed for {{token}} interpolation in prereq steps
-    const variables: Record<string, string> = {}
+    let variables: Record<string, string> = {}
     if (prerequisite) {
       const project = await prisma.project.findUnique({
         where: { id: projectId },
         select: { workspaceId: true },
       })
-      if (project) {
-        const workspaceVars = await prisma.workspaceVariable.findMany({
-          where: { workspaceId: project.workspaceId },
-        })
-        for (const v of workspaceVars) variables[v.name] = v.value
-      }
+      if (project)
+        variables = await this.workspace.getVariablesMap(project.workspaceId)
     }
 
     return explorePage({
@@ -46,8 +46,8 @@ export class ExploreService {
       context: dto.context,
       prerequisite,
       variables,
-      env: (process.env.BROWSER_ENV ?? 'LOCAL') as 'LOCAL' | 'BROWSERBASE',
-      geminiApiKey: process.env.GEMINI_API_KEY ?? '',
+      env: (process.env.BROWSER_ENV ?? "LOCAL") as "LOCAL" | "BROWSERBASE",
+      geminiApiKey: process.env.GEMINI_API_KEY ?? "",
       browserbaseApiKey: process.env.BROWSERBASE_API_KEY,
       browserbaseProjectId: process.env.BROWSERBASE_PROJECT_ID,
     })

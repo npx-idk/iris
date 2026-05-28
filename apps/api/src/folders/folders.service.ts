@@ -1,36 +1,34 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common'
-import { prisma } from '../prisma/prisma'
-import { CreateFolderDto } from './dto/create-folder.dto'
-import { UpdateFolderDto } from './dto/update-folder.dto'
+import { Injectable, NotFoundException } from "@nestjs/common"
+import { prisma } from "../prisma/prisma"
+import { ProjectAccessService } from "../common/project-access.service"
+import { CreateFolderDto } from "./dto/create-folder.dto"
+import { UpdateFolderDto } from "./dto/update-folder.dto"
 
 @Injectable()
 export class FoldersService {
-  private async verifyProjectAccess(projectId: string, userId: string, write = false) {
-    const member = await prisma.projectMember.findUnique({
-      where: { userId_projectId: { userId, projectId } },
-    })
-    if (!member) throw new ForbiddenException('Not a project member')
-    if (write && member.role === 'VIEWER') throw new ForbiddenException('Viewers cannot modify folders')
-    return member
-  }
+  constructor(private projectAccess: ProjectAccessService) {}
 
-  private async getFolderAndVerify(folderId: string, userId: string, write = false) {
+  private async getFolderAndVerify(
+    folderId: string,
+    userId: string,
+    write = false
+  ) {
     const folder = await prisma.folder.findUnique({ where: { id: folderId } })
-    if (!folder) throw new NotFoundException('Folder not found')
-    await this.verifyProjectAccess(folder.projectId, userId, write)
+    if (!folder) throw new NotFoundException("Folder not found")
+    await this.projectAccess.verifyMember(folder.projectId, userId, write)
     return folder
   }
 
   async findAll(projectId: string, userId: string) {
-    await this.verifyProjectAccess(projectId, userId)
+    await this.projectAccess.verifyMember(projectId, userId)
     return prisma.folder.findMany({
       where: { projectId },
-      orderBy: [{ parentId: 'asc' }, { order: 'asc' }, { name: 'asc' }],
+      orderBy: [{ parentId: "asc" }, { order: "asc" }, { name: "asc" }],
     })
   }
 
   async create(projectId: string, userId: string, dto: CreateFolderDto) {
-    await this.verifyProjectAccess(projectId, userId, true)
+    await this.projectAccess.verifyMember(projectId, userId, true)
     const maxOrder = await prisma.folder.aggregate({
       where: { projectId, parentId: dto.parentId ?? null },
       _max: { order: true },
@@ -58,7 +56,6 @@ export class FoldersService {
 
   async remove(folderId: string, userId: string) {
     await this.getFolderAndVerify(folderId, userId, true)
-    // Children cascade via DB, tests get folderId=null via SetNull
     await prisma.folder.delete({ where: { id: folderId } })
   }
 }

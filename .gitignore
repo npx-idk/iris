@@ -50,3 +50,6 @@ packages/*/src/**/*.d.ts.map
 
 # TypeScript incremental build info
 *.tsbuildinfo
+
+# Next.js generated type file
+**/next-env.d.ts

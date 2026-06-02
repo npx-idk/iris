@@ -1,8 +1,8 @@
-export type StepResult = 'PASSED' | 'FAILED' | 'SKIPPED'
+export type StepResult = "PASSED" | "FAILED" | "SKIPPED"
 // Terminal statuses only — matches CompletedRunStatus from @iris/common
-export type RunStatus = 'PASSED' | 'FAILED' | 'CANCELLED'
-export type BrowserEnv = 'LOCAL' | 'BROWSERBASE'
-export type CacheStatus = 'HIT' | 'MISS' | undefined
+export type RunStatus = "PASSED" | "FAILED" | "CANCELLED"
+export type BrowserEnv = "LOCAL" | "BROWSERBASE"
+export type CacheStatus = "HIT" | "MISS" | undefined
 
 export interface AgentStep {
   id: string
@@ -19,6 +19,14 @@ export interface StepAction {
   arguments: unknown[]
 }
 
+export interface MetricsSnapshot {
+  totalPromptTokens: number
+  totalCompletionTokens: number
+  totalReasoningTokens: number
+  totalCachedInputTokens: number
+  totalInferenceTimeMs: number
+}
+
 export interface StepLog {
   stepIndex: number
   testStepId: string
@@ -30,10 +38,15 @@ export interface StepLog {
   durationMs: number
   screenshotBase64?: string
   actions?: StepAction[]
+  metricsSnapshot?: MetricsSnapshot
 }
 
 export interface RunMetrics {
   totalTokens: number
+  promptTokens: number
+  completionTokens: number
+  reasoningTokens: number
+  cachedTokens: number
   inferenceTimeMs: number
   cacheHits: number
   cacheMisses: number
@@ -67,7 +80,7 @@ export interface StoredNetworkEntry {
 export interface StoredConsoleEntry {
   id: string
   timestamp: number
-  kind: 'log' | 'info' | 'warn' | 'error'
+  kind: "log" | "info" | "warn" | "error"
   message: string
 }
 
@@ -84,6 +97,9 @@ export interface RunConfig {
   projectVariables?: Record<string, string>
   env: BrowserEnv
   geminiApiKey: string
+  modelName?: string
+  heliconeApiKey?: string
+  heliconeBaseUrl?: string
   browserbaseApiKey?: string
   browserbaseProjectId?: string
   continueOnFailure?: boolean

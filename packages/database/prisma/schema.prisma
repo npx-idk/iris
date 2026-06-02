@@ -286,10 +286,14 @@ model TestRun {
   totalSteps      Int        @default(0)
   passedSteps     Int        @default(0)
   metadata        Json?
-  totalTokens     Int?
-  inferenceTimeMs Int?
-  cacheHits       Int?
-  browserEnv      String?
+  totalTokens      Int?
+  promptTokens     Int?
+  completionTokens Int?
+  reasoningTokens  Int?
+  cachedTokens     Int?
+  inferenceTimeMs  Int?
+  cacheHits        Int?
+  browserEnv       String?
   liveViewUrl     String?
 
   projectRunId String?
@@ -315,10 +319,14 @@ model TestRunStep {
   stepIndex     Int
   instruction   String
   description   String?
-  result        StepResult
-  cacheStatus   String?
-  errorMessage  String?
-  durationMs    Int        @default(0)
+  result           StepResult
+  cacheStatus      String?
+  errorMessage     String?
+  durationMs       Int        @default(0)
+  promptTokens     Int?
+  completionTokens Int?
+  reasoningTokens  Int?
+  cachedTokens     Int?
   screenshotUrl String?
   actionsJson   Json?
   createdAt     DateTime   @default(now())

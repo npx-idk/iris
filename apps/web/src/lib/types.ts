@@ -1,8 +1,17 @@
-import type { RunStatus, BrowserTab } from '@iris/common'
-export type { ProjectRole, ApiKeyRole, Project, ProjectMember, ApiKey, ProjectDetail, RunStatus, BrowserTab } from '@iris/common';
+import type { RunStatus, BrowserTab } from "@iris/common"
+export type {
+  ProjectRole,
+  ApiKeyRole,
+  Project,
+  ProjectMember,
+  ApiKey,
+  ProjectDetail,
+  RunStatus,
+  BrowserTab,
+} from "@iris/common"
 
-export type StepResult = 'PASSED' | 'FAILED' | 'SKIPPED'
-export type CacheStatus = 'HIT' | 'MISS'
+export type StepResult = "PASSED" | "FAILED" | "SKIPPED"
+export type CacheStatus = "HIT" | "MISS"
 
 export interface TestPrerequisite {
   id: string
@@ -66,6 +75,10 @@ export interface TestRun extends TestRunSummary {
   liveViewUrl?: string
   browserEnv?: string
   totalTokens?: number
+  promptTokens?: number
+  completionTokens?: number
+  reasoningTokens?: number
+  cachedTokens?: number
   inferenceTimeMs?: number
   cacheHits?: number
   stepResults: TestRunStep[]
@@ -89,7 +102,7 @@ export interface StoredNetworkEntry {
 export interface StoredConsoleEntry {
   id: string
   timestamp: number
-  kind: 'log' | 'info' | 'warn' | 'error'
+  kind: "log" | "info" | "warn" | "error"
   message: string
 }
 
@@ -164,6 +177,10 @@ export interface TestRunStep {
   cacheStatus?: CacheStatus
   errorMessage?: string
   durationMs: number
+  promptTokens?: number
+  completionTokens?: number
+  reasoningTokens?: number
+  cachedTokens?: number
   screenshotUrl?: string
   actionsJson?: StepAction[]
   testStepId?: string

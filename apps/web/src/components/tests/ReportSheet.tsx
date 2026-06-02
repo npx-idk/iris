@@ -1,6 +1,6 @@
-'use client'
+"use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect } from "react"
 import {
   useCreateBlockNote,
   SideMenuController,
@@ -8,21 +8,36 @@ import {
   DragHandleMenu,
   RemoveBlockItem,
   BlockColorsItem,
-  useBlockNoteEditor
-} from '@blocknote/react'
-import { BlockNoteView } from '@blocknote/shadcn'
-import '@blocknote/shadcn/style.css'
-import '@blocknote/core/fonts/inter.css'
+  useBlockNoteEditor,
+} from "@blocknote/react"
+import { BlockNoteView } from "@blocknote/shadcn"
+import "@blocknote/shadcn/style.css"
+import "@blocknote/core/fonts/inter.css"
 
-import { Button } from '@iris/ui/components/button'
-import { Badge } from '@iris/ui/components/badge'
-import { Input } from '@iris/ui/components/input'
-import { Label } from '@iris/ui/components/label'
-import { Popover, PopoverContent, PopoverTrigger } from '@iris/ui/components/popover'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@iris/ui/components/select'
-import { Card, CardContent } from '@iris/ui/components/card'
-import { Skeleton } from '@iris/ui/components/skeleton'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@iris/ui/components/tooltip'
+import { Button } from "@iris/ui/components/button"
+import { Badge } from "@iris/ui/components/badge"
+import { Input } from "@iris/ui/components/input"
+import { Label } from "@iris/ui/components/label"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@iris/ui/components/popover"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@iris/ui/components/select"
+import { Card, CardContent } from "@iris/ui/components/card"
+import { Skeleton } from "@iris/ui/components/skeleton"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@iris/ui/components/tooltip"
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -34,12 +49,17 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from '@iris/ui/components/animate-ui/components/radix/dropdown-menu'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@iris/ui/components/animate-ui/components/radix/tabs'
-import { Toggle } from '@iris/ui/components/animate-ui/components/radix/toggle'
-import { Sheet, SheetContent, SheetTitle } from '@iris/ui/components/sheet'
+} from "@iris/ui/components/animate-ui/components/radix/dropdown-menu"
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@iris/ui/components/animate-ui/components/radix/tabs"
+import { Toggle } from "@iris/ui/components/animate-ui/components/radix/toggle"
+import { Sheet, SheetContent, SheetTitle } from "@iris/ui/components/sheet"
 
-import { TestWithSteps, TestRun } from '@/lib/types'
+import { TestWithSteps, TestRun } from "@/lib/types"
 
 const blockNoteShadcnComponents = {
   Badge: { Badge },
@@ -68,61 +88,97 @@ const blockNoteShadcnComponents = {
 }
 
 const CustomDragHandleMenu = (props: any) => {
-  const editor = useBlockNoteEditor();
+  const editor = useBlockNoteEditor()
 
   const handleUpdateBlockType = (type: string, headingLevel?: number) => {
     if (props.block) {
-      if (type === 'heading' && headingLevel) {
+      if (type === "heading" && headingLevel) {
         editor.updateBlock(props.block, {
           type,
-          props: { level: headingLevel }
-        } as any);
+          props: { level: headingLevel },
+        } as any)
       } else {
         editor.updateBlock(props.block, {
-          type
-        } as any);
+          type,
+        } as any)
       }
     }
-  };
+  }
 
   return (
     <DragHandleMenu>
       <RemoveBlockItem {...props}>Delete</RemoveBlockItem>
       <BlockColorsItem {...props}>Colors</BlockColorsItem>
-      
+
       <DropdownMenuSub>
-        <DropdownMenuSubTrigger className="w-full flex items-center gap-2 cursor-pointer py-1.5 px-2 text-xs rounded-sm hover:bg-accent text-foreground outline-none">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1 h-3.5 w-3.5"><path d="M16 3h5v5"/><path d="M8 21H3v-5"/><path d="M12 20v-8"/><path d="M12 12V4"/><path d="m21 3-7.5 7.5"/><path d="M3 21l7.5-7.5"/></svg>
+        <DropdownMenuSubTrigger className="flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-xs text-foreground outline-none hover:bg-accent">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="mr-1 h-3.5 w-3.5"
+          >
+            <path d="M16 3h5v5" />
+            <path d="M8 21H3v-5" />
+            <path d="M12 20v-8" />
+            <path d="M12 12V4" />
+            <path d="m21 3-7.5 7.5" />
+            <path d="M3 21l7.5-7.5" />
+          </svg>
           Turn into
         </DropdownMenuSubTrigger>
-        <DropdownMenuSubContent className="z-[9999] bg-popover text-popover-foreground border border-border rounded-md shadow-md p-1 min-w-[130px]">
-          <DropdownMenuItem className="cursor-pointer py-1 px-2 text-xs rounded-sm hover:bg-accent text-foreground outline-none" onClick={() => handleUpdateBlockType("paragraph")}>
+        <DropdownMenuSubContent className="z-[9999] min-w-[130px] rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md">
+          <DropdownMenuItem
+            className="cursor-pointer rounded-sm px-2 py-1 text-xs text-foreground outline-none hover:bg-accent"
+            onClick={() => handleUpdateBlockType("paragraph")}
+          >
             Paragraph
           </DropdownMenuItem>
-          <DropdownMenuItem className="cursor-pointer py-1 px-2 text-xs rounded-sm hover:bg-accent text-foreground outline-none" onClick={() => handleUpdateBlockType("heading", 1)}>
+          <DropdownMenuItem
+            className="cursor-pointer rounded-sm px-2 py-1 text-xs text-foreground outline-none hover:bg-accent"
+            onClick={() => handleUpdateBlockType("heading", 1)}
+          >
             Heading 1
           </DropdownMenuItem>
-          <DropdownMenuItem className="cursor-pointer py-1 px-2 text-xs rounded-sm hover:bg-accent text-foreground outline-none" onClick={() => handleUpdateBlockType("heading", 2)}>
+          <DropdownMenuItem
+            className="cursor-pointer rounded-sm px-2 py-1 text-xs text-foreground outline-none hover:bg-accent"
+            onClick={() => handleUpdateBlockType("heading", 2)}
+          >
             Heading 2
           </DropdownMenuItem>
-          <DropdownMenuItem className="cursor-pointer py-1 px-2 text-xs rounded-sm hover:bg-accent text-foreground outline-none" onClick={() => handleUpdateBlockType("heading", 3)}>
+          <DropdownMenuItem
+            className="cursor-pointer rounded-sm px-2 py-1 text-xs text-foreground outline-none hover:bg-accent"
+            onClick={() => handleUpdateBlockType("heading", 3)}
+          >
             Heading 3
           </DropdownMenuItem>
-          <DropdownMenuItem className="cursor-pointer py-1 px-2 text-xs rounded-sm hover:bg-accent text-foreground outline-none" onClick={() => handleUpdateBlockType("bulletListItem")}>
+          <DropdownMenuItem
+            className="cursor-pointer rounded-sm px-2 py-1 text-xs text-foreground outline-none hover:bg-accent"
+            onClick={() => handleUpdateBlockType("bulletListItem")}
+          >
             Bullet List
           </DropdownMenuItem>
-          <DropdownMenuItem className="cursor-pointer py-1 px-2 text-xs rounded-sm hover:bg-accent text-foreground outline-none" onClick={() => handleUpdateBlockType("numberedListItem")}>
+          <DropdownMenuItem
+            className="cursor-pointer rounded-sm px-2 py-1 text-xs text-foreground outline-none hover:bg-accent"
+            onClick={() => handleUpdateBlockType("numberedListItem")}
+          >
             Numbered List
           </DropdownMenuItem>
         </DropdownMenuSubContent>
       </DropdownMenuSub>
     </DragHandleMenu>
-  );
-};
+  )
+}
 
 const CustomSideMenu = (props: any) => (
   <SideMenu {...props} dragHandleMenu={CustomDragHandleMenu} />
-);
+)
 
 interface ReportSheetProps {
   isOpen: boolean
@@ -133,7 +189,14 @@ interface ReportSheetProps {
   project: any
 }
 
-export function ReportSheet({ isOpen, onOpenChange, test, activeRun, resolvedTheme, project }: ReportSheetProps) {
+export function ReportSheet({
+  isOpen,
+  onOpenChange,
+  test,
+  activeRun,
+  resolvedTheme,
+  project,
+}: ReportSheetProps) {
   const [copied, setCopied] = useState(false)
   const editor = useCreateBlockNote()
 
@@ -161,14 +224,19 @@ export function ReportSheet({ isOpen, onOpenChange, test, activeRun, resolvedThe
   }, [isOpen, editor, activeRun]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function generateHtmlReport() {
-    if (!test || !activeRun) return ''
-    
-    const duration = activeRun.finishedAt && activeRun.createdAt
-      ? ((new Date(activeRun.finishedAt).getTime() - new Date(activeRun.createdAt).getTime()) / 1000).toFixed(1) + 's'
-      : 'N/A'
+    if (!test || !activeRun) return ""
+
+    const duration =
+      activeRun.finishedAt && activeRun.createdAt
+        ? (
+            (new Date(activeRun.finishedAt).getTime() -
+              new Date(activeRun.createdAt).getTime()) /
+            1000
+          ).toFixed(1) + "s"
+        : "N/A"
 
     const stepsList = activeRun.stepResults ?? []
-    
+
     let html = `<h1>Test Execution Report: ${test.name}</h1>`
     if (test.description) {
       html += `<p><em>${test.description}</em></p>`
@@ -178,7 +246,7 @@ export function ReportSheet({ isOpen, onOpenChange, test, activeRun, resolvedThe
     html += `<li><strong>Status</strong>: ${activeRun.status}</li>`
     html += `<li><strong>Run ID</strong>: <code>${activeRun.id}</code></li>`
     html += `<li><strong>Date</strong>: ${new Date(activeRun.createdAt).toLocaleString()}</li>`
-    html += `<li><strong>Browser Environment</strong>: ${activeRun.browserEnv ?? 'N/A'}</li>`
+    html += `<li><strong>Browser Environment</strong>: ${activeRun.browserEnv ?? "N/A"}</li>`
     html += `<li><strong>Steps</strong>: ${activeRun.passedSteps} / ${activeRun.totalSteps} passed</li>`
     html += `<li><strong>Duration</strong>: ${duration}</li>`
     if (activeRun.totalTokens) {
@@ -188,27 +256,27 @@ export function ReportSheet({ isOpen, onOpenChange, test, activeRun, resolvedThe
       html += `<li><strong>Inference Time</strong>: ${(activeRun.inferenceTimeMs / 1000).toFixed(1)}s</li>`
     }
     html += `</ul>`
-    
-    if (activeRun.status === 'FAILED') {
+
+    if (activeRun.status === "FAILED") {
       html += `<h2>Execution Failure Context</h2>`
       if (activeRun.errorMessage) {
         html += `<p><strong>Error Message</strong>: <code>${activeRun.errorMessage}</code></p>`
       }
-      
+
       html += `<h3>How to Reproduce</h3>`
-      html += `<p>This error occurred under the <strong>${activeRun.browserEnv ?? 'LOCAL'}</strong> browser environment. To reproduce this failure:</p>`
+      html += `<p>This error occurred under the <strong>${activeRun.browserEnv ?? "LOCAL"}</strong> browser environment. To reproduce this failure:</p>`
       html += `<ol>`
       if (test.startUrl) {
         html += `<li>Navigate to the start URL: <code>${test.startUrl}</code></li>`
       } else if (project?.baseUrl) {
         html += `<li>Navigate to the project base URL: <code>${project.baseUrl}</code></li>`
       }
-      
+
       let foundFailure = false
       stepsList.forEach((step, idx) => {
         if (foundFailure) return
-        if (step.result === 'FAILED') {
-          html += `<li><strong>Failed Step (Step ${idx + 1})</strong>: <code>${step.instruction}</code> (Error: <em>${step.errorMessage ?? 'Unknown error'}</em>)</li>`
+        if (step.result === "FAILED") {
+          html += `<li><strong>Failed Step (Step ${idx + 1})</strong>: <code>${step.instruction}</code> (Error: <em>${step.errorMessage ?? "Unknown error"}</em>)</li>`
           foundFailure = true
         } else {
           html += `<li>Execute step ${idx + 1}: <code>${step.instruction}</code></li>`
@@ -216,9 +284,9 @@ export function ReportSheet({ isOpen, onOpenChange, test, activeRun, resolvedThe
       })
       html += `</ol>`
     }
-    
+
     html += `<h2>Steps Execution</h2>`
-    
+
     if (stepsList.length === 0) {
       html += `<p><em>No steps recorded.</em></p>`
     } else {
@@ -228,8 +296,8 @@ export function ReportSheet({ isOpen, onOpenChange, test, activeRun, resolvedThe
       html += `</thead>`
       html += `<tbody>`
       stepsList.forEach((step) => {
-        const stepDuration = (step.durationMs / 1000).toFixed(1) + 's'
-        const error = step.errorMessage ? step.errorMessage : ''
+        const stepDuration = (step.durationMs / 1000).toFixed(1) + "s"
+        const error = step.errorMessage ? step.errorMessage : ""
         html += `<tr>`
         html += `<td>${step.stepIndex + 1}</td>`
         html += `<td>${step.instruction}</td>`
@@ -241,18 +309,18 @@ export function ReportSheet({ isOpen, onOpenChange, test, activeRun, resolvedThe
       html += `</tbody>`
       html += `</table>`
     }
-    
+
     return html
   }
 
   async function downloadReport() {
     if (!editor) return
     const mdContent = await editor.blocksToMarkdownLossy(editor.document)
-    const blob = new Blob([mdContent], { type: 'text/markdown;charset=utf-8;' })
+    const blob = new Blob([mdContent], { type: "text/markdown;charset=utf-8;" })
     const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
+    const link = document.createElement("a")
     link.href = url
-    link.setAttribute('download', `test-report-${test?.id}-${activeRun?.id}.md`)
+    link.setAttribute("download", `test-report-${test?.id}-${activeRun?.id}.md`)
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
@@ -269,33 +337,96 @@ export function ReportSheet({ isOpen, onOpenChange, test, activeRun, resolvedThe
 
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" showCloseButton={false} className="!h-[95vh] sm:max-w-none flex flex-col mx-5 rounded-lg p-6 overflow-hidden">
-        <div className="flex items-center justify-between border-b border-border pb-4 mb-4 shrink-0">
+      <SheetContent
+        side="bottom"
+        showCloseButton={false}
+        className="mx-5 flex !h-[95vh] flex-col overflow-hidden rounded-lg p-6 sm:max-w-none"
+      >
+        <div className="mb-4 flex shrink-0 items-center justify-between border-b border-border pb-4">
           <div>
-            <SheetTitle className="text-lg font-semibold">Test Execution Report</SheetTitle>
-            <p className="text-xs text-muted-foreground">View and edit rich test execution results</p>
+            <SheetTitle className="text-lg font-semibold">
+              Test Execution Report
+            </SheetTitle>
+            <p className="text-xs text-muted-foreground">
+              View and edit rich test execution results
+            </p>
           </div>
           <div className="flex items-center gap-1.5">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="outline" size="icon" onClick={copyToClipboard}>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={copyToClipboard}
+                  >
                     {copied ? (
-                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-600 animate-in fade-in zoom-in duration-200"><polyline points="20 6 9 17 4 12"/></svg>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="animate-in text-primary duration-200 fade-in zoom-in"
+                      >
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
                     ) : (
-                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <rect
+                          x="9"
+                          y="9"
+                          width="13"
+                          height="13"
+                          rx="2"
+                          ry="2"
+                        />
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                      </svg>
                     )}
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>{copied ? 'Copied!' : 'Copy markdown'}</p>
+                  <p>{copied ? "Copied!" : "Copy markdown"}</p>
                 </TooltipContent>
               </Tooltip>
 
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="outline" size="icon" onClick={downloadReport}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={downloadReport}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="7 10 12 15 17 10" />
+                      <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -305,8 +436,25 @@ export function ReportSheet({ isOpen, onOpenChange, test, activeRun, resolvedThe
 
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onOpenChange(false)}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -317,16 +465,11 @@ export function ReportSheet({ isOpen, onOpenChange, test, activeRun, resolvedThe
           </div>
         </div>
 
-        <div 
-          className="flex-1 overflow-y-auto min-h-0 border border-border rounded-md bg-card p-4 bn-editor-container
-            [&_.bn-editor]:!p-6 [&_.bn-editor]:!pl-14
-            [&_.bn-root]:!font-sans [&_.bn-root_*]:!font-sans [&_.bn-editor]:!font-sans [&_.bn-editor_*]:!font-sans
-            [&_.bn-root]:!bg-transparent [--bn-colors-editor-background:transparent]"
-        >
+        <div className="bn-editor-container min-h-0 flex-1 overflow-y-auto rounded-md border border-border bg-card p-4 [--bn-colors-editor-background:transparent] [&_.bn-editor]:!p-6 [&_.bn-editor]:!pl-14 [&_.bn-editor]:!font-sans [&_.bn-editor_*]:!font-sans [&_.bn-root]:!bg-transparent [&_.bn-root]:!font-sans [&_.bn-root_*]:!font-sans">
           {editor && (
             <BlockNoteView
               editor={editor}
-              theme={resolvedTheme === 'dark' ? 'dark' : 'light'}
+              theme={resolvedTheme === "dark" ? "dark" : "light"}
               shadCNComponents={blockNoteShadcnComponents as any}
               sideMenu={false}
             >

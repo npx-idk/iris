@@ -1,11 +1,11 @@
-import { Outfit, Geist_Mono } from "next/font/google"
+import { Fustat, Geist_Mono } from "next/font/google"
 
 import "@iris/ui/globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { QueryProvider } from "@/components/query-provider"
-import { cn } from "@iris/ui/lib/utils";
+import { cn } from "@iris/ui/lib/utils"
 
-const outfit = Outfit({ subsets: ['latin'], variable: '--font-sans' })
+const fustat = Fustat({ subsets: ["latin"], variable: "--font-sans" })
 
 const fontMono = Geist_Mono({
   subsets: ["latin"],
@@ -21,7 +21,12 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn("antialiased", fontMono.variable, "font-sans", outfit.variable)}
+      className={cn(
+        "antialiased",
+        fontMono.variable,
+        "font-sans",
+        fustat.variable
+      )}
     >
       <body>
         <QueryProvider>

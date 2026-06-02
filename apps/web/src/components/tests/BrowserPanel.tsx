@@ -1,21 +1,24 @@
-'use client'
+"use client"
 
-import { useState, useEffect, RefObject } from 'react'
-import { HugeiconsIcon } from '@hugeicons/react'
+import { useState, useEffect, RefObject } from "react"
+import { HugeiconsIcon } from "@hugeicons/react"
 import {
-  Cancel01Icon, Cursor01Icon,
-  ArrowLeft01Icon, ArrowRight01Icon, Refresh01Icon,
+  Cancel01Icon,
+  Cursor01Icon,
+  ArrowLeft01Icon,
+  ArrowRight01Icon,
+  Refresh01Icon,
   PlayIcon,
-} from '@hugeicons/core-free-icons'
-import { BrowserTab, TestStep, TestRunStep, BrowserEventLog } from '@/lib/types'
-import { SessionState } from '@/hooks/useAuthorSession'
+} from "@hugeicons/core-free-icons"
+import { BrowserTab, TestStep, TestRunStep, BrowserEventLog } from "@/lib/types"
+import { SessionState } from "@/hooks/useAuthorSession"
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
-import { NetworkPanel, type NetworkEntry } from './NetworkPanel'
-import { ConsolePanel, type ConsoleEntry } from './ConsolePanel'
-import { ApplicationPanel } from './ApplicationPanel'
-import { FramePlayer } from './FramePlayer'
-import { Button } from '@iris/ui/components/animate-ui/components/buttons/button'
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000"
+import { NetworkPanel, type NetworkEntry } from "./NetworkPanel"
+import { ConsolePanel, type ConsoleEntry } from "./ConsolePanel"
+import { ApplicationPanel } from "./ApplicationPanel"
+import { FramePlayer } from "./FramePlayer"
+import { Button } from "@iris/ui/components/button"
 
 interface BrowserPanelProps {
   sessionId: string | null
@@ -65,106 +68,176 @@ interface BrowserPanelProps {
 }
 
 export function BrowserPanel({
-  sessionId, runActive, lastRunId, onStartBrowser, sessionState, isBusy, statusLabel,
-  canvasRef, canvasHandlers, interactiveMode, onInteractiveModeChange,
-  browserTabs, onActivateTab, onCloseTab,
-  urlInput, urlFocusedRef, urlBarRef, onUrlChange, onNavigate, onBack, onForward, onReload,
-  networkEntries, onClearNetwork, consoleEntries, onClearConsole, consoleEndRef, sessionStartRef,
-  selectedStep, selectedRunStep, onClearSelectedStep, runEvents,
+  sessionId,
+  runActive,
+  lastRunId,
+  onStartBrowser,
+  sessionState,
+  isBusy,
+  statusLabel,
+  canvasRef,
+  canvasHandlers,
+  interactiveMode,
+  onInteractiveModeChange,
+  browserTabs,
+  onActivateTab,
+  onCloseTab,
+  urlInput,
+  urlFocusedRef,
+  urlBarRef,
+  onUrlChange,
+  onNavigate,
+  onBack,
+  onForward,
+  onReload,
+  networkEntries,
+  onClearNetwork,
+  consoleEntries,
+  onClearConsole,
+  consoleEndRef,
+  sessionStartRef,
+  selectedStep,
+  selectedRunStep,
+  onClearSelectedStep,
+  runEvents,
 }: BrowserPanelProps) {
-  const [bottomTab, setBottomTab] = useState<'network' | 'console' | 'application'>('network')
+  const [bottomTab, setBottomTab] = useState<
+    "network" | "console" | "application"
+  >("network")
 
   // Canvas is visible whenever a session is live OR a run is in progress
-  const showCanvas = sessionState !== 'idle' || runActive
+  const showCanvas = sessionState !== "idle" || runActive
 
   // Step detail view — shown when a step is selected from the left panel
   if (selectedStep) {
-    const passed = selectedRunStep?.result === 'PASSED'
+    const passed = selectedRunStep?.result === "PASSED"
     return (
-      <div className="flex-1 bg-card flex flex-col overflow-hidden min-w-0">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-card">
         {/* Header */}
-        <div className="flex items-start gap-3 px-5 py-[9px] border-b border-border shrink-0">
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-foreground leading-snug">
+        <div className="flex shrink-0 items-start gap-3 border-b border-border px-5 py-[9px]">
+          <div className="min-w-0 flex-1">
+            <p className="text-sm leading-snug font-medium text-foreground">
               {selectedStep.description || selectedStep.instruction}
             </p>
             {selectedStep.description && (
-              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{selectedStep.instruction}</p>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                {selectedStep.instruction}
+              </p>
             )}
           </div>
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={onClearSelectedStep}
-            className="shrink-0 p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+            className="h-8 w-8 shrink-0 text-muted-foreground"
           >
-            <HugeiconsIcon icon={Cancel01Icon} size={14} color="currentColor" strokeWidth={1.5} />
-          </button>
+            <HugeiconsIcon
+              icon={Cancel01Icon}
+              size={14}
+              color="currentColor"
+              strokeWidth={1.5}
+            />
+          </Button>
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-4">
+        <div className="flex-1 space-y-4 overflow-y-auto p-5">
           {!selectedRunStep ? (
-            <div className="flex flex-col items-center justify-center py-12 gap-2">
-              <p className="text-sm text-muted-foreground">This step has not been run yet</p>
-              <p className="text-xs text-muted-foreground/60">Run the test to see results here</p>
+            <div className="flex flex-col items-center justify-center gap-2 py-12">
+              <p className="text-sm text-muted-foreground">
+                This step has not been run yet
+              </p>
+              <p className="text-xs text-muted-foreground/60">
+                Run the test to see results here
+              </p>
             </div>
           ) : (
             <>
               {/* Result row */}
               <div className="flex items-center gap-3">
-                <div className={`w-2 h-2 rounded-full shrink-0 ${passed ? 'bg-green-500' : 'bg-destructive'}`} />
-                <span className={`text-sm font-medium ${passed ? 'text-green-600' : 'text-destructive'}`}>
-                  {passed ? 'Passed' : 'Failed'}
+                <div
+                  className={`h-2 w-2 shrink-0 rounded-full ${passed ? "bg-primary" : "bg-destructive"}`}
+                />
+                <span
+                  className={`text-sm font-medium ${passed ? "text-primary" : "text-destructive"}`}
+                >
+                  {passed ? "Passed" : "Failed"}
                 </span>
                 {selectedRunStep.durationMs !== undefined && (
-                  <span className="text-xs text-muted-foreground ml-auto">{selectedRunStep.durationMs}ms</span>
+                  <span className="ml-auto text-xs text-muted-foreground">
+                    {selectedRunStep.durationMs}ms
+                  </span>
                 )}
               </div>
 
               {/* Error / reason */}
               {selectedRunStep.errorMessage && (
-                <div className="rounded-lg bg-destructive/10 border border-destructive/20 px-4 py-3">
-                  <p className="text-xs font-medium text-destructive mb-1">Reason</p>
-                  <p className="text-xs text-destructive/90 leading-relaxed">{selectedRunStep.errorMessage}</p>
+                <div className="rounded-lg border border-destructive/20 bg-destructive/10 px-4 py-3">
+                  <p className="mb-1 text-xs font-medium text-destructive">
+                    Reason
+                  </p>
+                  <p className="text-xs leading-relaxed text-destructive/90">
+                    {selectedRunStep.errorMessage}
+                  </p>
                 </div>
               )}
 
               {/* Selectors */}
-              {passed && selectedRunStep.actionsJson && selectedRunStep.actionsJson.length > 0 && (
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
-                    {selectedRunStep.actionsJson.length === 1 ? 'Selector' : 'Selectors'}
-                  </p>
-                  <div className="space-y-2">
-                    {selectedRunStep.actionsJson.map((action, i) => (
-                      <div key={i} className="rounded-lg bg-muted/40 border border-border px-3 py-2 space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-medium text-foreground">{action.method}</span>
-                          {action.description && (
-                            <span className="text-xs text-muted-foreground">— {action.description}</span>
-                          )}
+              {passed &&
+                selectedRunStep.actionsJson &&
+                selectedRunStep.actionsJson.length > 0 && (
+                  <div>
+                    <p className="mb-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                      {selectedRunStep.actionsJson.length === 1
+                        ? "Selector"
+                        : "Selectors"}
+                    </p>
+                    <div className="space-y-2">
+                      {selectedRunStep.actionsJson.map((action, i) => (
+                        <div
+                          key={i}
+                          className="space-y-1 rounded-lg border border-border bg-muted/40 px-3 py-2"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-medium text-foreground">
+                              {action.method}
+                            </span>
+                            {action.description && (
+                              <span className="text-xs text-muted-foreground">
+                                — {action.description}
+                              </span>
+                            )}
+                          </div>
+                          <p className="font-mono text-xs leading-relaxed break-all text-muted-foreground">
+                            {action.selector}
+                          </p>
                         </div>
-                        <p className="text-xs font-mono text-muted-foreground break-all leading-relaxed">
-                          {action.selector}
-                        </p>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
               {/* Screenshot */}
               <div>
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Screenshot</p>
+                <p className="mb-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                  Screenshot
+                </p>
                 {selectedRunStep.screenshotUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={selectedRunStep.screenshotUrl.startsWith('http') ? selectedRunStep.screenshotUrl : `${API_BASE}${selectedRunStep.screenshotUrl}`}
+                    src={
+                      selectedRunStep.screenshotUrl.startsWith("http")
+                        ? selectedRunStep.screenshotUrl
+                        : `${API_BASE}${selectedRunStep.screenshotUrl}`
+                    }
                     alt="Step screenshot"
                     className="w-full rounded-xl border border-border object-contain"
                   />
                 ) : (
-                  <div className="w-full aspect-video rounded-xl border border-dashed border-border bg-muted/20 flex items-center justify-center">
-                    <p className="text-xs text-muted-foreground">No screenshot captured</p>
+                  <div className="flex aspect-video w-full items-center justify-center rounded-xl border border-dashed border-border bg-muted/20">
+                    <p className="text-xs text-muted-foreground">
+                      No screenshot captured
+                    </p>
                   </div>
                 )}
               </div>
@@ -176,28 +249,41 @@ export function BrowserPanel({
   }
 
   return (
-    <div className="flex-1 bg-muted/20 flex flex-col overflow-hidden min-w-0">
-
+    <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-muted/20">
       {/* ── Author mode: tab bar ── */}
       {sessionId && !runActive && browserTabs.length > 0 && (
-        <div className="flex items-center border-b border-border bg-card shrink-0 overflow-x-auto">
+        <div className="flex shrink-0 items-center overflow-x-auto border-b border-border bg-card">
           {browserTabs.map((t) => (
             <div
               key={t.targetId}
-              className={`group flex items-center gap-1.5 px-3 py-[13px] min-w-0 max-w-52 border-r border-border cursor-pointer shrink-0 transition-colors ${
-                t.active ? 'bg-background text-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'
+              className={`group flex max-w-52 min-w-0 shrink-0 cursor-pointer items-center gap-1.5 border-r border-border px-3 py-[13px] transition-colors ${
+                t.active
+                  ? "bg-background text-foreground"
+                  : "text-muted-foreground hover:bg-muted/40 hover:text-foreground"
               }`}
               onClick={() => onActivateTab(t.targetId)}
             >
               <TabFavicon url={t.url} />
-              <span className="text-xs truncate flex-1 min-w-0">{tabTitle(t.url)}</span>
+              <span className="min-w-0 flex-1 truncate text-xs">
+                {tabTitle(t.url)}
+              </span>
               {browserTabs.length > 1 && (
-                <button
-                  onClick={(e) => { e.stopPropagation(); onCloseTab(t.targetId) }}
-                  className="shrink-0 opacity-0 group-hover:opacity-60 hover:!opacity-100 text-muted-foreground hover:text-foreground transition-opacity leading-none"
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onCloseTab(t.targetId)
+                  }}
+                  className="h-4 w-4 shrink-0 text-muted-foreground opacity-0 group-hover:opacity-60 hover:!opacity-100"
                 >
-                  <HugeiconsIcon icon={Cancel01Icon} size={10} color="currentColor" strokeWidth={1.5} />
-                </button>
+                  <HugeiconsIcon
+                    icon={Cancel01Icon}
+                    size={10}
+                    color="currentColor"
+                    strokeWidth={1.5}
+                  />
+                </Button>
               )}
             </div>
           ))}
@@ -206,31 +292,70 @@ export function BrowserPanel({
 
       {/* ── Author mode: URL bar ── */}
       {sessionId && !runActive && (
-        <div className="flex items-center gap-1 px-2 py-1.5 border-b border-border bg-card shrink-0">
-          <button onClick={onBack} className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors" title="Go back">
-            <HugeiconsIcon icon={ArrowLeft01Icon} size={14} color="currentColor" strokeWidth={1.5} />
-          </button>
-          <button onClick={onForward} className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors" title="Go forward">
-            <HugeiconsIcon icon={ArrowRight01Icon} size={14} color="currentColor" strokeWidth={1.5} />
-          </button>
-          <button onClick={onReload} className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors" title="Reload">
-            <HugeiconsIcon icon={Refresh01Icon} size={14} color="currentColor" strokeWidth={1.5} />
-          </button>
-          <div className="flex-1 flex items-center bg-muted/50 border border-border rounded-md px-2.5 h-7 ml-1 focus-within:border-ring focus-within:ring-1 focus-within:ring-ring transition-all">
+        <div className="flex shrink-0 items-center gap-1 border-b border-border bg-card px-2 py-1.5">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onBack}
+            title="Go back"
+            className="h-7 w-7 text-muted-foreground"
+          >
+            <HugeiconsIcon
+              icon={ArrowLeft01Icon}
+              size={14}
+              color="currentColor"
+              strokeWidth={1.5}
+            />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onForward}
+            title="Go forward"
+            className="h-7 w-7 text-muted-foreground"
+          >
+            <HugeiconsIcon
+              icon={ArrowRight01Icon}
+              size={14}
+              color="currentColor"
+              strokeWidth={1.5}
+            />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onReload}
+            title="Reload"
+            className="h-7 w-7 text-muted-foreground"
+          >
+            <HugeiconsIcon
+              icon={Refresh01Icon}
+              size={14}
+              color="currentColor"
+              strokeWidth={1.5}
+            />
+          </Button>
+          <div className="ml-1 flex h-7 flex-1 items-center rounded-md border border-border bg-muted/50 px-2.5 transition-all focus-within:border-ring focus-within:ring-1 focus-within:ring-ring">
             <input
               ref={urlBarRef}
               type="text"
               value={urlInput}
               onChange={(e) => onUrlChange(e.target.value)}
-              onFocus={(e) => { urlFocusedRef.current = true; e.target.select() }}
+              onFocus={(e) => {
+                urlFocusedRef.current = true
+                e.target.select()
+              }}
               onBlur={() => {
                 urlFocusedRef.current = false
                 const active = browserTabs.find((t) => t.active)
                 if (active) onUrlChange(active.url)
               }}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') { onNavigate(urlInput); urlFocusedRef.current = false }
-                if (e.key === 'Escape') {
+                if (e.key === "Enter") {
+                  onNavigate(urlInput)
+                  urlFocusedRef.current = false
+                }
+                if (e.key === "Escape") {
                   urlFocusedRef.current = false
                   urlBarRef.current?.blur()
                   const active = browserTabs.find((t) => t.active)
@@ -238,7 +363,7 @@ export function BrowserPanel({
                 }
               }}
               placeholder="Enter URL…"
-              className="flex-1 bg-transparent text-xs outline-none text-foreground placeholder:text-muted-foreground/50 min-w-0"
+              className="min-w-0 flex-1 bg-transparent text-xs text-foreground outline-none placeholder:text-muted-foreground/50"
               spellCheck={false}
             />
           </div>
@@ -246,31 +371,37 @@ export function BrowserPanel({
       )}
 
       {/* ── Canvas area (always mounted; collapses to h-0 when idle so it keeps receiving frames) ── */}
-      <div className={showCanvas ? 'flex-1 flex items-center justify-center p-6 overflow-hidden min-h-0' : 'h-0 overflow-hidden'}>
+      <div
+        className={
+          showCanvas
+            ? "flex min-h-0 flex-1 items-center justify-center overflow-hidden p-6"
+            : "h-0 overflow-hidden"
+        }
+      >
         <div className="w-full max-w-4xl space-y-3">
-          <div className="relative rounded-xl border border-border shadow-xl overflow-hidden bg-black flex flex-col">
+          <div className="relative flex flex-col overflow-hidden rounded-xl border border-border bg-black shadow-xl">
             {/* Mock Browser Chrome */}
-            <div className="h-9 bg-muted/80 border-b border-border flex items-center px-4 gap-2 shrink-0">
-              <div className="w-2.5 h-2.5 rounded-full bg-red-500/80" />
-              <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/80" />
-              <div className="w-2.5 h-2.5 rounded-full bg-green-500/80" />
-              <div className="flex-1 flex justify-center mr-8">
-                <div className="h-5 w-64 bg-background/50 rounded-md text-[10px] text-muted-foreground/50 flex items-center justify-center font-mono select-none">
+            <div className="flex h-9 shrink-0 items-center gap-2 border-b border-border bg-muted/80 px-4">
+              <div className="h-2.5 w-2.5 rounded-full bg-destructive/80" />
+              <div className="h-2.5 w-2.5 rounded-full bg-muted-foreground/60" />
+              <div className="h-2.5 w-2.5 rounded-full bg-primary/80" />
+              <div className="mr-8 flex flex-1 justify-center">
+                <div className="flex h-5 w-64 items-center justify-center rounded-md bg-background/50 font-mono text-[10px] text-muted-foreground/50 select-none">
                   live session
                 </div>
               </div>
             </div>
-            
+
             <div className="relative">
               <canvas
                 ref={canvasRef}
                 width={1280}
                 height={720}
                 tabIndex={0}
-                className={`w-full aspect-video bg-black outline-none transition-colors ${
-                  sessionState === 'ready' && !runActive && interactiveMode
-                    ? 'cursor-crosshair'
-                    : 'cursor-default'
+                className={`aspect-video w-full bg-black transition-colors outline-none ${
+                  sessionState === "ready" && !runActive && interactiveMode
+                    ? "cursor-crosshair"
+                    : "cursor-default"
                 }`}
                 onMouseDown={canvasHandlers.onMouseDown}
                 onMouseUp={canvasHandlers.onMouseUp}
@@ -280,21 +411,32 @@ export function BrowserPanel({
                 onKeyDown={canvasHandlers.onKeyDown}
                 onKeyUp={canvasHandlers.onKeyUp}
               />
-              {sessionState === 'ready' && !runActive && !interactiveMode && (
-                <div className="absolute bottom-3 right-3 cursor-pointer" onClick={() => { onInteractiveModeChange(true); canvasRef.current?.focus() }}>
-                  <div className="flex items-center gap-1.5 bg-card/90 backdrop-blur-sm border border-border rounded-md px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:border-primary transition-colors select-none shadow-sm">
-                    <HugeiconsIcon icon={Cursor01Icon} size={12} color="currentColor" strokeWidth={1.5} />
+              {sessionState === "ready" && !runActive && !interactiveMode && (
+                <div
+                  className="absolute right-3 bottom-3 cursor-pointer"
+                  onClick={() => {
+                    onInteractiveModeChange(true)
+                    canvasRef.current?.focus()
+                  }}
+                >
+                  <div className="flex items-center gap-1.5 rounded-md border border-border bg-card/90 px-2.5 py-1.5 text-xs text-muted-foreground shadow-sm backdrop-blur-sm transition-colors select-none hover:border-primary hover:text-foreground">
+                    <HugeiconsIcon
+                      icon={Cursor01Icon}
+                      size={12}
+                      color="currentColor"
+                      strokeWidth={1.5}
+                    />
                     Enable interaction
                   </div>
                 </div>
               )}
-              {sessionState === 'ready' && !runActive && interactiveMode && (
+              {sessionState === "ready" && !runActive && interactiveMode && (
                 <div className="absolute top-2 right-2">
                   <button
                     onClick={() => onInteractiveModeChange(false)}
-                    className="flex items-center gap-1.5 bg-primary text-primary-foreground text-xs px-2.5 py-1 rounded-md hover:bg-primary/90 transition-colors shadow-md"
+                    className="flex items-center gap-1.5 rounded-md bg-primary px-2.5 py-1 text-xs text-primary-foreground shadow-md transition-colors hover:bg-primary/90"
                   >
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary-foreground animate-pulse" />
+                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary-foreground" />
                     Interacting · click to stop
                   </button>
                 </div>
@@ -302,7 +444,9 @@ export function BrowserPanel({
             </div>
           </div>
           {isBusy && statusLabel && !runActive && (
-            <p className="text-xs text-center text-muted-foreground">{statusLabel}</p>
+            <p className="text-center text-xs text-muted-foreground">
+              {statusLabel}
+            </p>
           )}
         </div>
       </div>
@@ -310,39 +454,69 @@ export function BrowserPanel({
       {/* ── Idle: recording + logs in a scrollable column ── */}
       {!showCanvas && (
         <div className="flex-1 overflow-y-auto">
-          <div className="p-6 max-w-4xl mx-auto space-y-4">
+          <div className="mx-auto max-w-4xl space-y-4 p-6">
             {lastRunId ? (
               <>
                 <FramePlayer runId={lastRunId} />
 
                 {/* Logs below recording */}
                 {runEvents && (
-                  <div className="rounded-xl border border-border bg-card overflow-hidden">
-                    <div className="flex items-center p-1.5 border-b border-border bg-muted/10 gap-1">
-                      {(['network', 'console'] as const).map((t) => {
-                        const errorCount = runEvents.console.filter((e) => e.kind === 'error').length
+                  <div className="overflow-hidden rounded-xl border border-border bg-card">
+                    <div className="flex items-center gap-1 border-b border-border bg-muted/10 p-1.5">
+                      {(["network", "console"] as const).map((t) => {
+                        const errorCount = runEvents.console.filter(
+                          (e) => e.kind === "error"
+                        ).length
                         return (
-                          <button
+                          <Button
                             key={t}
+                            variant="ghost"
+                            size="sm"
                             onClick={() => setBottomTab(t)}
-                            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors capitalize flex items-center gap-1.5 ${bottomTab === t ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'}`}
+                            className={`flex h-auto items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium capitalize ${bottomTab === t ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"}`}
                           >
-                            {t === 'network' && <>{runEvents.network.length > 0 && <span className="text-muted-foreground">{runEvents.network.length}</span>} Network</>}
-                            {t === 'console' && (
-                              <>Console{errorCount > 0 && (
-                                <span className="px-1 rounded bg-destructive/15 text-destructive text-[10px]">{errorCount}</span>
-                              )}</>
+                            {t === "network" && (
+                              <>
+                                {runEvents.network.length > 0 && (
+                                  <span className="text-muted-foreground">
+                                    {runEvents.network.length}
+                                  </span>
+                                )}{" "}
+                                Network
+                              </>
                             )}
-                          </button>
+                            {t === "console" && (
+                              <>
+                                Console
+                                {errorCount > 0 && (
+                                  <span className="rounded bg-destructive/15 px-1 text-[10px] text-destructive">
+                                    {errorCount}
+                                  </span>
+                                )}
+                              </>
+                            )}
+                          </Button>
                         )
                       })}
                     </div>
                     <div className="h-64">
-                      {bottomTab !== 'application' && bottomTab === 'network' && (
-                        <NetworkPanel entries={runEvents.network.map((e) => ({ ...e, mimeType: e.mimeType ?? '', pending: false }))} />
-                      )}
-                      {(bottomTab === 'console' || bottomTab === 'application') && (
-                        <ConsolePanel entries={runEvents.console} endRef={consoleEndRef} startedAt={0} />
+                      {bottomTab !== "application" &&
+                        bottomTab === "network" && (
+                          <NetworkPanel
+                            entries={runEvents.network.map((e) => ({
+                              ...e,
+                              mimeType: e.mimeType ?? "",
+                              pending: false,
+                            }))}
+                          />
+                        )}
+                      {(bottomTab === "console" ||
+                        bottomTab === "application") && (
+                        <ConsolePanel
+                          entries={runEvents.console}
+                          endRef={consoleEndRef}
+                          startedAt={0}
+                        />
                       )}
                     </div>
                   </div>
@@ -350,11 +524,19 @@ export function BrowserPanel({
               </>
             ) : (
               <div
-                className="w-full aspect-video rounded-xl border border-dashed border-border bg-muted/20 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-primary/50 hover:bg-muted/30 transition-colors"
+                className="flex aspect-video w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-muted/20 transition-colors hover:border-primary/50 hover:bg-muted/30"
                 onClick={onStartBrowser}
               >
-                <HugeiconsIcon icon={PlayIcon} size={28} color="currentColor" strokeWidth={1} className="text-muted-foreground" />
-                <p className="text-sm text-muted-foreground">Click to open a live browser</p>
+                <HugeiconsIcon
+                  icon={PlayIcon}
+                  size={28}
+                  color="currentColor"
+                  strokeWidth={1}
+                  className="text-muted-foreground"
+                />
+                <p className="text-sm text-muted-foreground">
+                  Click to open a live browser
+                </p>
               </div>
             )}
           </div>
@@ -362,41 +544,85 @@ export function BrowserPanel({
       )}
 
       {/* ── Bottom dev tools: live session only ── */}
-      {sessionId && !runActive && (() => {
-        const errorCount = consoleEntries.filter((e) => e.kind === 'error' || e.kind === 'exception').length
-        return (
-          <div className="shrink-0 border-t border-border bg-card flex flex-col h-72">
-            <div className="flex items-center p-1.5 border-b border-border shrink-0 bg-muted/10 gap-1">
-              {(['network', 'console', 'application'] as const).map((t) => (
-                <button
-                  key={t}
-                  onClick={() => setBottomTab(t)}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors capitalize flex items-center gap-1.5 ${bottomTab === t ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'}`}
-                >
-                  {t === 'network' && <>{networkEntries.length > 0 && <span className="text-muted-foreground">{networkEntries.length}</span>} Network</>}
-                  {t === 'console' && (
-                    <>Console{errorCount > 0 && (
-                      <span className="px-1 rounded bg-destructive/15 text-destructive text-[10px]">{errorCount}</span>
-                    )}</>
+      {sessionId &&
+        !runActive &&
+        (() => {
+          const errorCount = consoleEntries.filter(
+            (e) => e.kind === "error" || e.kind === "exception"
+          ).length
+          return (
+            <div className="flex h-72 shrink-0 flex-col border-t border-border bg-card">
+              <div className="flex shrink-0 items-center gap-1 border-b border-border bg-muted/10 p-1.5">
+                {(["network", "console", "application"] as const).map((t) => (
+                  <Button
+                    key={t}
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setBottomTab(t)}
+                    className={`flex h-auto items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium capitalize ${bottomTab === t ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"}`}
+                  >
+                    {t === "network" && (
+                      <>
+                        {networkEntries.length > 0 && (
+                          <span className="text-muted-foreground">
+                            {networkEntries.length}
+                          </span>
+                        )}{" "}
+                        Network
+                      </>
+                    )}
+                    {t === "console" && (
+                      <>
+                        Console
+                        {errorCount > 0 && (
+                          <span className="rounded bg-destructive/15 px-1 text-[10px] text-destructive">
+                            {errorCount}
+                          </span>
+                        )}
+                      </>
+                    )}
+                    {t === "application" && "Application"}
+                  </Button>
+                ))}
+                <div className="ml-auto flex items-center gap-2 pr-3">
+                  {bottomTab === "network" && networkEntries.length > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="xs"
+                      onClick={onClearNetwork}
+                      className="h-auto text-[11px] text-muted-foreground"
+                    >
+                      Clear
+                    </Button>
                   )}
-                  {t === 'application' && 'Application'}
-                </button>
-              ))}
-              <div className="ml-auto flex items-center gap-2 pr-3">
-                {bottomTab === 'network' && networkEntries.length > 0 && (
-                  <button onClick={onClearNetwork} className="text-[11px] text-muted-foreground hover:text-foreground transition-colors">Clear</button>
-                )}
-                {bottomTab === 'console' && consoleEntries.length > 0 && (
-                  <button onClick={onClearConsole} className="text-[11px] text-muted-foreground hover:text-foreground transition-colors">Clear</button>
-                )}
+                  {bottomTab === "console" && consoleEntries.length > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="xs"
+                      onClick={onClearConsole}
+                      className="h-auto text-[11px] text-muted-foreground"
+                    >
+                      Clear
+                    </Button>
+                  )}
+                </div>
               </div>
+              {bottomTab === "network" && (
+                <NetworkPanel entries={networkEntries} />
+              )}
+              {bottomTab === "console" && (
+                <ConsolePanel
+                  entries={consoleEntries}
+                  endRef={consoleEndRef}
+                  startedAt={sessionStartRef.current}
+                />
+              )}
+              {bottomTab === "application" && (
+                <ApplicationPanel sessionId={sessionId} />
+              )}
             </div>
-            {bottomTab === 'network' && <NetworkPanel entries={networkEntries} />}
-            {bottomTab === 'console' && <ConsolePanel entries={consoleEntries} endRef={consoleEndRef} startedAt={sessionStartRef.current} />}
-            {bottomTab === 'application' && <ApplicationPanel sessionId={sessionId} />}
-          </div>
-        )
-      })()}
+          )
+        })()}
     </div>
   )
 }
@@ -404,7 +630,12 @@ export function BrowserPanel({
 // ─── Local UI helpers ─────────────────────────────────────��───────────────────
 
 function tabTitle(url: string): string {
-  try { const u = new URL(url); return u.hostname || 'New Tab' } catch { return 'New Tab' }
+  try {
+    const u = new URL(url)
+    return u.hostname || "New Tab"
+  } catch {
+    return "New Tab"
+  }
 }
 
 function TabFavicon({ url }: { url: string }) {
@@ -412,8 +643,20 @@ function TabFavicon({ url }: { url: string }) {
   let origin: string | null = null
   try {
     const u = new URL(url)
-    if (u.protocol !== 'about:' && u.protocol !== 'data:') origin = u.origin
-  } catch { /* ignore */ }
-  if (!origin || !visible) return <span className="w-3 h-3 shrink-0 rounded-sm bg-muted-foreground/20" />
-  return <img src={`${origin}/favicon.ico`} className="w-3 h-3 shrink-0 rounded-sm" onError={() => setVisible(false)} alt="" />
+    if (u.protocol !== "about:" && u.protocol !== "data:") origin = u.origin
+  } catch {
+    /* ignore */
+  }
+  if (!origin || !visible)
+    return (
+      <span className="h-3 w-3 shrink-0 rounded-sm bg-muted-foreground/20" />
+    )
+  return (
+    <img
+      src={`${origin}/favicon.ico`}
+      className="h-3 w-3 shrink-0 rounded-sm"
+      onError={() => setVisible(false)}
+      alt=""
+    />
+  )
 }

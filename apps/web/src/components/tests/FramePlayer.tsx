@@ -1,10 +1,10 @@
-'use client'
+"use client"
 
-import { useEffect, useRef, useState } from 'react'
-import { api } from '@/lib/api'
-import { HugeiconsIcon } from '@hugeicons/react'
-import { PlayIcon, PauseIcon, Refresh01Icon } from '@hugeicons/core-free-icons'
-import { Button } from '@iris/ui/components/animate-ui/components/buttons/button'
+import { useEffect, useRef, useState } from "react"
+import { api } from "@/lib/api"
+import { HugeiconsIcon } from "@hugeicons/react"
+import { PlayIcon, PauseIcon, Refresh01Icon } from "@hugeicons/core-free-icons"
+import { Button } from "@iris/ui/components/animate-ui/components/buttons/button"
 
 interface FramePlayerProps {
   runId: string
@@ -22,11 +22,14 @@ export function FramePlayer({ runId, className }: FramePlayerProps) {
 
   useEffect(() => {
     setLoading(true)
-    api.get<string[]>(`/runs/${runId}/frames`).then((f) => {
-      setFrames(f)
-      setCurrent(0)
-      setPlaying(false)
-    }).finally(() => setLoading(false))
+    api
+      .get<string[]>(`/runs/${runId}/frames`)
+      .then((f) => {
+        setFrames(f)
+        setCurrent(0)
+        setPlaying(false)
+      })
+      .finally(() => setLoading(false))
   }, [runId])
 
   useEffect(() => {
@@ -34,41 +37,54 @@ export function FramePlayer({ runId, className }: FramePlayerProps) {
     if (!playing || frames.length === 0) return
     intervalRef.current = setInterval(() => {
       setCurrent((prev) => {
-        if (prev >= frames.length - 1) { setPlaying(false); return prev }
+        if (prev >= frames.length - 1) {
+          setPlaying(false)
+          return prev
+        }
         return prev + 1
       })
     }, 1000 / FPS)
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current)
+    }
   }, [playing, frames.length])
 
   if (loading) {
     return (
-      <div className={`flex items-center justify-center bg-black rounded-xl ${className ?? 'aspect-video w-full'}`}>
-        <span className="text-xs text-muted-foreground">Loading recording…</span>
+      <div
+        className={`flex items-center justify-center rounded-xl bg-black ${className ?? "aspect-video w-full"}`}
+      >
+        <span className="text-xs text-muted-foreground">
+          Loading recording…
+        </span>
       </div>
     )
   }
 
   if (frames.length === 0) {
     return (
-      <div className={`flex items-center justify-center bg-black rounded-xl ${className ?? 'aspect-video w-full'}`}>
-        <span className="text-xs text-muted-foreground">No recording available</span>
+      <div
+        className={`flex items-center justify-center rounded-xl bg-black ${className ?? "aspect-video w-full"}`}
+      >
+        <span className="text-xs text-muted-foreground">
+          No recording available
+        </span>
       </div>
     )
   }
 
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000"
 
   return (
-    <div className={`flex flex-col gap-3 ${className ?? ''}`}>
-      <div className="relative rounded-xl overflow-hidden bg-black border border-border shadow-xl flex flex-col">
+    <div className={`flex flex-col gap-3 ${className ?? ""}`}>
+      <div className="relative flex flex-col overflow-hidden rounded-xl border border-border bg-black shadow-xl">
         {/* Mock Browser Chrome */}
-        <div className="h-9 bg-muted/80 border-b border-border flex items-center px-4 gap-2 shrink-0">
-          <div className="w-2.5 h-2.5 rounded-full bg-red-500/80" />
-          <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/80" />
-          <div className="w-2.5 h-2.5 rounded-full bg-green-500/80" />
-          <div className="flex-1 flex justify-center mr-8">
-            <div className="h-5 w-64 bg-background/50 rounded-md text-[10px] text-muted-foreground/50 flex items-center justify-center font-mono select-none">
+        <div className="flex h-9 shrink-0 items-center gap-2 border-b border-border bg-muted/80 px-4">
+          <div className="h-2.5 w-2.5 rounded-full bg-destructive/80" />
+          <div className="h-2.5 w-2.5 rounded-full bg-muted-foreground/60" />
+          <div className="h-2.5 w-2.5 rounded-full bg-primary/80" />
+          <div className="mr-8 flex flex-1 justify-center">
+            <div className="flex h-5 w-64 items-center justify-center rounded-md bg-background/50 font-mono text-[10px] text-muted-foreground/50 select-none">
               recording playback
             </div>
           </div>
@@ -77,12 +93,16 @@ export function FramePlayer({ runId, className }: FramePlayerProps) {
         <div className="relative">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={frames[current]!.startsWith('http') ? frames[current] : `${apiBase}${frames[current]}`}
+            src={
+              frames[current]!.startsWith("http")
+                ? frames[current]
+                : `${apiBase}${frames[current]}`
+            }
             alt={`Frame ${current + 1}`}
-            className="w-full aspect-video object-contain"
+            className="aspect-video w-full object-contain"
           />
-          <div className="absolute bottom-2 right-2 flex items-center gap-1.5 bg-black/60 backdrop-blur-sm rounded-md px-2 py-1">
-            <span className="text-xs text-white/70 tabular-nums">
+          <div className="absolute right-2 bottom-2 flex items-center gap-1.5 rounded-md bg-black/60 px-2 py-1 backdrop-blur-sm">
+            <span className="text-xs text-foreground/70 tabular-nums">
               {current + 1} / {frames.length}
             </span>
           </div>
@@ -96,8 +116,11 @@ export function FramePlayer({ runId, className }: FramePlayerProps) {
           min={0}
           max={frames.length - 1}
           value={current}
-          onChange={(e) => { setPlaying(false); setCurrent(Number(e.target.value)) }}
-          className="w-full h-1 bg-muted rounded-full appearance-none outline-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-moz-range-thumb]:w-3 [&::-moz-range-thumb]:h-3 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:border-none"
+          onChange={(e) => {
+            setPlaying(false)
+            setCurrent(Number(e.target.value))
+          }}
+          className="h-1 w-full cursor-pointer appearance-none rounded-full bg-muted outline-none [&::-moz-range-thumb]:h-3 [&::-moz-range-thumb]:w-3 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-none [&::-moz-range-thumb]:bg-primary [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary"
         />
       </div>
 
@@ -112,15 +135,28 @@ export function FramePlayer({ runId, className }: FramePlayerProps) {
           }}
           className="gap-1.5"
         >
-          <HugeiconsIcon icon={playing ? PauseIcon : PlayIcon} size={12} color="currentColor" strokeWidth={1.5} />
-          {playing ? 'Pause' : 'Play'}
+          <HugeiconsIcon
+            icon={playing ? PauseIcon : PlayIcon}
+            size={12}
+            color="currentColor"
+            strokeWidth={1.5}
+          />
+          {playing ? "Pause" : "Play"}
         </Button>
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => { setPlaying(false); setCurrent(0) }}
+          onClick={() => {
+            setPlaying(false)
+            setCurrent(0)
+          }}
         >
-          <HugeiconsIcon icon={Refresh01Icon} size={12} color="currentColor" strokeWidth={1.5} />
+          <HugeiconsIcon
+            icon={Refresh01Icon}
+            size={12}
+            color="currentColor"
+            strokeWidth={1.5}
+          />
         </Button>
         <span className="ml-auto text-xs text-muted-foreground">
           {(frames.length / FPS).toFixed(0)}s recording · {frames.length} frames

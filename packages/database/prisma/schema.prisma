@@ -1,0 +1,347 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Auth (better-auth compatible) ───────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  sessions         Session[]
+  accounts         Account[]
+  projectMembers   ProjectMember[]
+  workspaceMembers WorkspaceMember[]
+  apiKeys          ApiKey[]
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String
+  providerId            String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("accounts")
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("verifications")
+}
+
+// ─── Workspaces ───────────────────────────────────────────────────────────────
+
+model Workspace {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members   WorkspaceMember[]
+  projects  Project[]
+  variables WorkspaceVariable[]
+
+  @@map("workspaces")
+}
+
+enum WorkspaceRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+model WorkspaceMember {
+  id        String        @id @default(cuid())
+  role      WorkspaceRole @default(MEMBER)
+  createdAt DateTime      @default(now())
+
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, workspaceId])
+  @@map("workspace_members")
+}
+
+model WorkspaceVariable {
+  id          String    @id @default(cuid())
+  name        String
+  value       String
+  isSecret    Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, name])
+  @@map("workspace_variables")
+}
+
+// ─── Projects ─────────────────────────────────────────────────────────────────
+
+model Project {
+  id          String          @id @default(cuid())
+  name        String
+  slug        String          @unique
+  description String?
+  baseUrl     String
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  workspaceId String
+  workspace   Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  members     ProjectMember[]
+  apiKeys     ApiKey[]
+  tests       Test[]
+  folders     Folder[]
+  flows       Flow[]
+
+  @@map("projects")
+}
+
+enum ProjectRole {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+model ProjectMember {
+  id        String      @id @default(cuid())
+  role      ProjectRole @default(MEMBER)
+  createdAt DateTime    @default(now())
+
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  projectId String
+  project   Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, projectId])
+  @@map("project_members")
+}
+
+enum ApiKeyRole {
+  CI
+  ADMIN
+}
+
+model ApiKey {
+  id         String     @id @default(cuid())
+  name       String
+  keyHash    String     @unique
+  keyPrefix  String
+  role       ApiKeyRole @default(CI)
+  lastUsedAt DateTime?
+  expiresAt  DateTime?
+  createdAt  DateTime   @default(now())
+
+  userId     String
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  projectId  String
+  project    Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("api_keys")
+}
+
+// ─── Tests ────────────────────────────────────────────────────────────────────
+
+model Folder {
+  id        String   @id @default(cuid())
+  name      String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  parentId  String?
+  parent    Folder?  @relation("FolderTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children  Folder[] @relation("FolderTree")
+
+  tests     Test[]
+
+  @@map("folders")
+}
+
+model Test {
+  id                String   @id @default(cuid())
+  name              String
+  description       String?
+  startUrl          String?
+  order             Int      @default(0)
+  enabled           Boolean  @default(true)
+  continueOnFailure Boolean  @default(false)
+  tags              String[] @default([])
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  folderId  String?
+  folder    Folder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
+
+  steps          TestStep[]
+  runs           TestRun[]
+  prerequisites  Test[]     @relation("TestPrerequisites")
+  prerequisiteOf Test[]     @relation("TestPrerequisites")
+
+  @@map("tests")
+}
+
+model TestStep {
+  id           String   @id @default(cuid())
+  stepIndex    Int
+  instruction  String
+  description  String?
+  variables    Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  testId       String
+  test         Test     @relation(fields: [testId], references: [id], onDelete: Cascade)
+
+  stepResults  TestRunStep[]
+
+  @@unique([testId, stepIndex])
+  @@map("test_steps")
+}
+
+// ─── Runs ─────────────────────────────────────────────────────────────────────
+
+enum RunStatus {
+  QUEUED
+  RUNNING
+  PASSED
+  FAILED
+  CANCELLED
+}
+
+enum RunTrigger {
+  MANUAL
+  SCHEDULE
+  API
+}
+
+model TestRun {
+  id              String     @id @default(cuid())
+  status          RunStatus  @default(QUEUED)
+  trigger         RunTrigger @default(MANUAL)
+  startedAt       DateTime?
+  finishedAt      DateTime?
+  errorMessage    String?
+  totalSteps      Int        @default(0)
+  passedSteps     Int        @default(0)
+  metadata        Json?
+  totalTokens     Int?
+  inferenceTimeMs Int?
+  cacheHits       Int?
+  browserEnv      String?
+  liveViewUrl     String?
+
+  projectRunId String?
+
+  createdAt    DateTime   @default(now())
+
+  testId       String
+  test         Test       @relation(fields: [testId], references: [id], onDelete: Cascade)
+
+  stepResults  TestRunStep[]
+
+  @@map("test_runs")
+}
+
+enum StepResult {
+  PASSED
+  FAILED
+  SKIPPED
+}
+
+model TestRunStep {
+  id            String     @id @default(cuid())
+  stepIndex     Int
+  instruction   String
+  description   String?
+  result        StepResult
+  cacheStatus   String?
+  errorMessage  String?
+  durationMs    Int        @default(0)
+  screenshotUrl String?
+  actionsJson   Json?
+  createdAt     DateTime   @default(now())
+
+  runId      String
+  run        TestRun   @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  testStepId String?
+  testStep   TestStep? @relation(fields: [testStepId], references: [id], onDelete: SetNull)
+
+  @@map("test_run_steps")
+}
+
+model Flow {
+  id        String   @id @default(cuid())
+  name      String
+  nodes     Json     @default("[]")
+  edges     Json     @default("[]")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("flows")
+}

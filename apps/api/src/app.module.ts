@@ -1,0 +1,40 @@
+import { Module } from "@nestjs/common"
+import { BullModule } from "@nestjs/bull"
+import { EventEmitterModule } from "@nestjs/event-emitter"
+import { env } from "./config/env"
+import { PrismaModule } from "./prisma/prisma.module"
+import { AuthModule } from "./auth/auth.module"
+import { ProjectsModule } from "./projects/projects.module"
+import { TestsModule } from "./tests/tests.module"
+import { RunsModule } from "./runs/runs.module"
+import { QueueModule } from "./queue/queue.module"
+import { SessionModule } from "./sessions/session.module"
+import { AuthoringModule } from "./author/author.module"
+import { CiModule } from "./ci/ci.module"
+import { WorkspaceModule } from "./workspace/workspace.module"
+import { ExploreModule } from "./explore/explore.module"
+import { FoldersModule } from "./folders/folders.module"
+import { FlowsModule } from "./flows/flows.module"
+
+@Module({
+  imports: [
+    EventEmitterModule.forRoot({ wildcard: true }),
+    BullModule.forRoot({
+      redis: env.redisUrl,
+    }),
+    PrismaModule,
+    AuthModule,
+    ProjectsModule,
+    TestsModule,
+    RunsModule,
+    QueueModule,
+    SessionModule,
+    AuthoringModule,
+    CiModule,
+    WorkspaceModule,
+    ExploreModule,
+    FoldersModule,
+    FlowsModule,
+  ],
+})
+export class AppModule {}

@@ -1,0 +1,8 @@
+{
+  "extends": "@iris/typescript-config/base.json",
+  "compilerOptions": {
+    "outDir": "./dist"
+  },
+  "include": ["prisma"],
+  "exclude": ["node_modules", "dist", "generated"]
+}

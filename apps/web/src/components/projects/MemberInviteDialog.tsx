@@ -53,7 +53,7 @@ export function MemberInviteDialog({
     setError,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema as never),
     mode: "onBlur",
     defaultValues: { email: "", role: "MEMBER" },
   })

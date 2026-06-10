@@ -16,6 +16,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@iris/ui/components/card"
+import { IrisMark } from "@iris/ui/components/logo"
 import { Input } from "@iris/ui/components/input"
 import { Label } from "@iris/ui/components/label"
 
@@ -40,7 +41,7 @@ export function SignupForm() {
     setError,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema as never),
     mode: "onBlur",
   })
 
@@ -60,6 +61,7 @@ export function SignupForm() {
   return (
     <Card>
       <CardHeader>
+        <IrisMark className="mb-2 size-8" />
         <CardTitle className="text-2xl font-semibold">
           Create an account
         </CardTitle>

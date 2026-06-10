@@ -56,7 +56,7 @@ export function ApiKeyCreateDialog({
     setError,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema as never),
     mode: "onBlur",
     defaultValues: { name: "", role: "CI" },
   })

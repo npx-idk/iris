@@ -130,7 +130,7 @@ export default function TestsPage() {
         : (selectedFolder?.name ?? "Tests")
 
   const newTestForm = useForm<NewTestValues>({
-    resolver: zodResolver(newTestSchema),
+    resolver: zodResolver(newTestSchema as never),
     mode: "onBlur",
   })
 

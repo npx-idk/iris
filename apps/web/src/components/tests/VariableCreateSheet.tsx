@@ -45,7 +45,7 @@ export function VariableCreateSheet({
     setError,
     formState: { errors, isSubmitting },
   } = useForm<CreateValues>({
-    resolver: zodResolver(createSchema),
+    resolver: zodResolver(createSchema as never),
     mode: "onBlur",
     defaultValues: { name: "", value: "", isSecret: false },
   })

@@ -40,7 +40,7 @@ export function NewProjectSheet({
     setError,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema as never),
     mode: "onBlur",
   })
 

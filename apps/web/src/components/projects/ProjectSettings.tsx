@@ -47,7 +47,7 @@ export function ProjectSettings({
     setError,
     formState: { errors, isSubmitting },
   } = useForm<SettingsValues>({
-    resolver: zodResolver(settingsSchema),
+    resolver: zodResolver(settingsSchema as never),
     mode: "onBlur",
     defaultValues: {
       name: project.name,

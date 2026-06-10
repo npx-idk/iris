@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { APP_URL, GITHUB_URL } from "@/lib/site"
+import { GETTING_STARTED_URL, GITHUB_URL } from "@/lib/site"
 import { GitHubIcon } from "./GitHubIcon"
 import { Logo } from "@iris/ui/components/logo"
 
@@ -12,7 +12,7 @@ const LINK_GROUPS: Array<{
     links: [
       { label: "Features", href: "#features" },
       { label: "How it works", href: "#how-it-works" },
-      { label: "Get started", href: APP_URL, external: true },
+      { label: "Get started", href: GETTING_STARTED_URL, external: true },
     ],
   },
   {

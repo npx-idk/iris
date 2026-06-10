@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { Button } from "@iris/ui/components/button"
 import { Tiles } from "@iris/ui/components/tiles"
-import { APP_URL, GITHUB_URL } from "@/lib/site"
+import { GETTING_STARTED_URL, GITHUB_URL } from "@/lib/site"
 
 export function Hero() {
   return (
@@ -43,10 +43,17 @@ export function Hero() {
         </p>
 
         <div className="pointer-events-auto mt-4 flex flex-wrap items-center justify-center gap-3">
-          <Button size="lg" asChild className="min-w-44">
-            <Link href={APP_URL}>Get Started</Link>
+          <Button size="lg" asChild className="h-12 min-w-52 px-8 text-base">
+            <Link href={GETTING_STARTED_URL} target="_blank" rel="noreferrer">
+              Get Started
+            </Link>
           </Button>
-          <Button size="lg" variant="outline" asChild className="min-w-44">
+          <Button
+            size="lg"
+            variant="outline"
+            asChild
+            className="h-12 min-w-52 bg-background px-8 text-base dark:bg-background dark:hover:bg-card"
+          >
             <Link href={GITHUB_URL} target="_blank" rel="noreferrer">
               View on GitHub
             </Link>

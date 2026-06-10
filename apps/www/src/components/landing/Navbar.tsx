@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { Button } from "@iris/ui/components/button"
-import { APP_URL, GITHUB_URL } from "@/lib/site"
+import { GITHUB_URL } from "@/lib/site"
 import { GitHubIcon } from "./GitHubIcon"
 import { Logo } from "@iris/ui/components/logo"
 
@@ -34,20 +34,11 @@ export function Navbar() {
 
         {/* Actions */}
         <div className="ml-auto flex items-center gap-2">
-          <Link
-            href={GITHUB_URL}
-            target="_blank"
-            rel="noreferrer"
-            aria-label="GitHub repository"
-            className="flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <GitHubIcon />
-          </Link>
-          <Button variant="ghost" size="sm" asChild>
-            <Link href={`${APP_URL}/login`}>Login</Link>
-          </Button>
           <Button size="sm" asChild>
-            <Link href={`${APP_URL}/signup`}>Sign Up</Link>
+            <Link href={GITHUB_URL} target="_blank" rel="noreferrer">
+              <GitHubIcon className="size-3.5" />
+              Star on GitHub
+            </Link>
           </Button>
         </div>
       </nav>

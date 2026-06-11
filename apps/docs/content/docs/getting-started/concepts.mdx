@@ -1,0 +1,40 @@
+---
+title: Core concepts
+description: The building blocks of Iris — workspaces, projects, tests, runs, and more.
+---
+
+## Workspace
+
+Your top-level container. A workspace holds projects and [workspace variables](/docs/writing-tests/variables), and has members with roles (owner, admin, member).
+
+## Project
+
+A project represents one application under test. It has a **base URL**, its own team members (owner, admin, member, viewer), [API keys](/docs/cli-ci/api-keys) for CI, and a collection of tests organized in folders.
+
+## Test
+
+A named scenario made of ordered **steps**. Each step is a plain-English instruction — an action ("Click the checkout button") or a verification ("Verify the cart shows 2 items"). Tests can be enabled or disabled; disabled tests are skipped when a whole project is run.
+
+## Step
+
+A single instruction the AI agent executes in the browser. Steps support `{{variable}}` interpolation from workspace variables.
+
+## Prerequisite
+
+A test can declare other tests as prerequisites. Their steps run first to put the browser in the right state — the classic example is a login test that runs before every authenticated scenario. See [Prerequisites & folders](/docs/writing-tests/prerequisites-and-folders).
+
+## Run
+
+One execution of a test. Runs are queued, executed in a fresh browser, and end in `PASSED`, `FAILED`, or `CANCELLED`. A run stores step results, frames (screenshots), console logs, and network events. Runs are triggered manually, on a schedule, or via the API/CLI.
+
+## Authoring session
+
+A live, interactive browser session used while writing a test — steps execute in real time as you author them, with multi-tab support and replay.
+
+## Flow
+
+A node-graph that orchestrates multiple tests, defining the order they run in. See [Flows](/docs/flows).
+
+## Workspace variable
+
+A named value (`{{BASE_EMAIL}}`, `{{PASSWORD}}`, …) stored once per workspace and interpolated into steps at run time. Variables marked secret are masked in the UI. See [Variables](/docs/writing-tests/variables).

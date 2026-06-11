@@ -1,0 +1,37 @@
+---
+title: Variables
+description: Store credentials and test data once, reference them in any step with {{name}}.
+---
+
+Workspace variables let you keep data out of test steps. Define a variable once at the workspace level, then reference it in any step:
+
+```text
+Enter {{TEST_EMAIL}} in the email field
+Enter {{TEST_PASSWORD}} in the password field
+```
+
+At run time, every `{{name}}` token is replaced with the variable's value before the step reaches the agent. Tokens that don't match a defined variable are left as-is.
+
+## Defining variables
+
+Manage variables on the **Variables** page in the web app. Each variable has:
+
+- **Name** — word characters only (letters, digits, underscore); this is what goes inside `{{…}}`.
+- **Value** — the string substituted into steps.
+- **Secret** — when enabled, the value is masked in the UI after creation.
+
+Variables are scoped to the workspace, so every project and test in it can use them.
+
+## Secrets
+
+Mark credentials, API tokens, and anything sensitive as **secret**. Secret values are masked in the web app and never shown again after saving.
+
+<Callout type="warn">
+  Variable values are interpolated into steps executed by a real browser — they
+  appear in the browser session like any typed input. Use dedicated test
+  accounts, never production credentials.
+</Callout>
+
+## Where interpolation applies
+
+`{{name}}` tokens are resolved everywhere steps execute: test runs, live authoring sessions, replays, and prerequisite steps during [AI explore](/docs/writing-tests/ai-explore).

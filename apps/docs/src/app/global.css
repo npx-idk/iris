@@ -1,0 +1,10 @@
+@import "tailwindcss";
+@import "fumadocs-ui/css/neutral.css";
+@import "fumadocs-ui/css/preset.css";
+
+/* Iris brand is neutral grayscale (see packages/ui globals.css), which the
+   Fumadocs neutral theme already matches — only the fonts need wiring. */
+@theme inline {
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+}

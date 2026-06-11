@@ -1,0 +1,37 @@
+---
+title: Architecture
+description: How the Iris monorepo is organized.
+---
+
+Iris is a pnpm + Turborepo monorepo:
+
+```text
+iris/
+├── apps/
+│   ├── api/          # NestJS — REST API, WebSocket gateway, Bull job processor
+│   ├── web/          # Next.js — test authoring UI, live canvas, run viewer
+│   └── www/          # Next.js — marketing site
+└── packages/
+    ├── agent/        # Stagehand browser automation engine
+    ├── cli/          # iris CLI — trigger runs from CI/CD pipelines
+    ├── common/       # Shared TypeScript types and event constants
+    ├── database/     # Prisma schema and generated client
+    ├── ui/           # Shared shadcn/ui component library
+    ├── eslint-config/
+    └── typescript-config/
+```
+
+| Layer      | Technology                            |
+| ---------- | ------------------------------------- |
+| Web        | Next.js (App Router, Turbopack)       |
+| API        | NestJS 11                             |
+| Auth       | better-auth (email/password)          |
+| Database   | PostgreSQL 17 + Prisma                |
+| Queue      | Bull + Redis                          |
+| Storage    | MinIO (screenshots, frame recordings) |
+| Browser AI | Stagehand + Gemini 2.5 Flash          |
+
+<Callout title="Documentation in progress">
+  Deeper dives — run lifecycle, the authoring WebSocket protocol, and the agent
+  execution loop — are planned.
+</Callout>

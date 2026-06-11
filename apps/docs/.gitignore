@@ -1,0 +1,10 @@
+# next.js
+/.next/
+/out/
+
+# fumadocs-mdx generated
+/.source/
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts

@@ -1,13 +1,13 @@
 import Link from "next/link"
 import { Button } from "@iris/ui/components/button"
-import { GITHUB_URL } from "@/lib/site"
+import { DOCS_URL, GITHUB_URL } from "@/lib/site"
 import { GitHubIcon } from "./GitHubIcon"
 import { Logo } from "@iris/ui/components/logo"
 
 const NAV_LINKS = [
   { label: "Features", href: "#features" },
   { label: "How it works", href: "#how-it-works" },
-  { label: "Docs", href: GITHUB_URL },
+  { label: "Docs", href: DOCS_URL },
 ]
 
 export function Navbar() {

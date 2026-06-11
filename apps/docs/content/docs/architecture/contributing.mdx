@@ -1,0 +1,26 @@
+---
+title: Contributing
+description: How to set up a dev environment and submit changes.
+---
+
+Iris is MIT-licensed and contributions are welcome. The short version:
+
+1. Fork the repo and branch from `main` (`feat/...`, `fix/...`, or `chore/...`).
+2. Set up locally — same steps as the [quickstart](/docs/getting-started).
+3. Keep PRs focused: one feature or fix per PR.
+4. Make sure checks pass before pushing:
+
+   ```bash
+   pnpm lint && pnpm typecheck && pnpm test && pnpm build
+   ```
+
+5. Open a PR against `main` describing the motivation and the change.
+
+A few conventions to know:
+
+- **UI components** come from `@iris/ui` — never hand-roll buttons, inputs, or cards. Add missing ones via `pnpm --filter @iris/ui dlx shadcn@latest add <name>`.
+- **Colors and spacing** use design tokens (`bg-background`, `text-muted-foreground`, …) — no hardcoded Tailwind palette classes.
+- **Data fetching (web)** goes through Axios + React Query — no raw `fetch`.
+- **Schema changes** require a Prisma migration: edit `packages/database/prisma/schema.prisma`, then `pnpm db:migrate`.
+
+The full guide lives in [CONTRIBUTING.md](https://github.com/npx-idk/iris/blob/main/CONTRIBUTING.md). For security vulnerabilities, follow [SECURITY.md](https://github.com/npx-idk/iris/blob/main/SECURITY.md) — please don't open public issues for those.

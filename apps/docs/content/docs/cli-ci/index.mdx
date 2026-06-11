@@ -1,0 +1,45 @@
+---
+title: CLI reference
+description: Trigger Iris test runs from any pipeline with the iris CLI.
+---
+
+The `iris` CLI (`@iris/cli`) triggers runs against an Iris instance, waits for them to finish, and exits with a code your pipeline can gate on. No install needed:
+
+```bash
+# Run all enabled tests in a project
+npx @iris/cli run --url https://your-iris-instance.com --key iris_... --project <projectId>
+
+# Run a single test
+npx @iris/cli run --url https://your-iris-instance.com --key iris_... --test <testId>
+```
+
+## `iris run`
+
+Triggers a project suite or a single test, polls until every queued run reaches a terminal state, prints per-run results and a summary, then exits.
+
+### Options
+
+| Option           | Env var    | Default  | Description                                            |
+| ---------------- | ---------- | -------- | ------------------------------------------------------ |
+| `--project <id>` | —          | —        | Project ID — runs all enabled tests in the project     |
+| `--test <id>`    | —          | —        | Test ID — runs a single test                           |
+| `--url <url>`    | `IRIS_URL` | —        | Iris API base URL                                      |
+| `--key <key>`    | `IRIS_KEY` | —        | API key (`iris_...`) — see [API keys](/docs/cli-ci/api-keys) |
+| `--poll <ms>`    | —          | `3000`   | Poll interval in milliseconds (minimum 1000)           |
+| `--timeout <ms>` | —          | `600000` | Maximum wait time (10 minutes)                         |
+
+`--url`/`--key` fall back to the `IRIS_URL`/`IRIS_KEY` environment variables, which is the recommended way to pass them in CI. Exactly one of `--project` or `--test` is required.
+
+### Exit codes
+
+| Code | Meaning                                                   |
+| ---- | --------------------------------------------------------- |
+| `0`  | All runs passed                                            |
+| `1`  | Any run failed or was cancelled, a trigger error occurred, or the timeout was hit |
+
+<Callout>
+  Disabled tests are skipped when triggering with `--project` — only enabled
+  tests are queued.
+</Callout>
+
+See [GitHub Actions](/docs/cli-ci/github-actions) for a ready-to-paste workflow.

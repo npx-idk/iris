@@ -1,0 +1,29 @@
+---
+title: Prerequisites & folders
+description: Chain tests with prerequisites, organize them in folders, and move suites between projects.
+---
+
+## Prerequisites
+
+A test can declare other tests as prerequisites. When the test runs, the prerequisite's steps execute first — in the same browser session — to put the app into the right state.
+
+The canonical example is authentication:
+
+1. Create a test **Login** that signs into the app.
+2. On **Checkout flow**, add **Login** as a prerequisite.
+3. Running **Checkout flow** now executes Login's steps first, then its own.
+
+Prerequisites keep individual tests focused on what they actually verify, and when your login flow changes you update one test instead of every test.
+
+<Callout>
+  Prerequisite chains are resolved recursively — a prerequisite's own
+  prerequisites run first. Iris prevents circular references.
+</Callout>
+
+## Folders
+
+Tests within a project can be organized into folders — group by feature area, page, or priority, whatever fits your suite. Folders are purely organizational; they don't affect execution order or run scope.
+
+## Import & export
+
+A project's test suite can be exported to a file and imported into another project — useful for seeding a staging project from production, sharing suites between teams, or keeping a versioned backup. Export/import preserves tests, steps, folder structure, and prerequisite relationships.

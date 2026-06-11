@@ -1,0 +1,50 @@
+---
+title: What is Iris?
+description: An open-source, AI-native end-to-end testing platform. Write test steps in plain English — Iris runs them in a real browser.
+---
+
+Iris is an AI-powered browser testing platform. Instead of writing selectors and scripts, you describe each test step in plain English:
+
+```text
+Go to the login page
+Enter {{TEST_EMAIL}} in the email field
+Enter {{TEST_PASSWORD}} in the password field
+Click the sign in button
+Verify the dashboard heading is visible
+```
+
+Iris executes those steps in a real browser using [Stagehand](https://github.com/browserbase/stagehand) and Google Gemini, streams every frame live while the test runs, and stores the full result — step outcomes, screenshots, console output, and network events — for later inspection.
+
+## How it works
+
+1. **Author** — open a live browser session in the web app, type steps in plain English, and watch them execute in real time as you write.
+2. **Run** — trigger tests manually, from the API, or from CI. Each run executes in a fresh browser (local Playwright or Browserbase cloud).
+3. **Observe** — follow runs live via streamed frames, then review step-by-step results, screenshots, console logs, and network activity.
+4. **Integrate** — generate a project API key and use the `iris` CLI to gate your CI pipeline on test results.
+
+## Key features
+
+- **Plain-English steps** — no selectors, no flaky scripts. The AI agent figures out how to perform each instruction on the page.
+- **Live authoring** — an interactive browser session where steps run as you write them, with multi-tab support and replay.
+- **Workspace variables** — store credentials and config once, reference them as `{{variable}}` in any step. Secrets are masked in the UI.
+- **Test prerequisites** — chain tests so shared setup (like logging in) runs before the test under inspection.
+- **AI explore** — point Iris at a page and let it propose tests for you.
+- **CI/CD integration** — trigger runs from pipelines with the CLI and API keys; exit codes reflect pass/fail.
+- **Self-hostable** — MIT-licensed, runs on PostgreSQL, Redis, and MinIO via Docker Compose.
+
+## Next steps
+
+<Cards>
+  <Card title="Getting started" href="/docs/getting-started">
+    Install Iris locally and run your first test in minutes.
+  </Card>
+  <Card title="Writing tests" href="/docs/writing-tests">
+    Learn how to write reliable plain-English test steps.
+  </Card>
+  <Card title="Self-hosting" href="/docs/self-hosting">
+    Deploy Iris on your own infrastructure.
+  </Card>
+  <Card title="CI/CD" href="/docs/cli-ci">
+    Run Iris tests from your pipeline with the CLI.
+  </Card>
+</Cards>

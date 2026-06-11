@@ -1,0 +1,24 @@
+---
+title: AI explore
+description: Point Iris at a page and let it propose tests for you.
+---
+
+Explore generates test candidates automatically. Give it a URL (and optional context about what matters to you), and Iris opens the page with the browser agent, examines what's there, and proposes plain-English tests you can review and save into your project.
+
+## How to use it
+
+1. In a project, open **Explore** and enter the URL to analyze.
+2. Optionally add context to focus the exploration — e.g. "focus on the checkout funnel" or "this is an admin panel; test the user management table".
+3. If the page requires login or other setup, pick an existing test as a **prerequisite** — its steps run first (with [variables](/docs/writing-tests/variables) interpolated) so the agent explores the page in the right state.
+4. Review the generated tests and keep the ones you want; edit their steps like any hand-written test.
+
+## When it shines
+
+- **Bootstrapping coverage** on a page that has no tests yet.
+- **Discovering scenarios** you might not think to write — the agent enumerates the interactions it can see.
+- **Authenticated areas** — with a login test as prerequisite, explore works behind sign-in walls.
+
+<Callout>
+  Treat generated tests as drafts. Review each step for intent before enabling
+  a generated test in CI — you own the assertions, the AI just proposes them.
+</Callout>

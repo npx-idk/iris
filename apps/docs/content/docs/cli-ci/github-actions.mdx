@@ -1,0 +1,44 @@
+---
+title: GitHub Actions
+description: Gate your pipeline on Iris test results.
+---
+
+Add a step that runs your project's suite and fails the job if any test fails:
+
+```yaml title=".github/workflows/e2e.yml"
+name: E2E tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run Iris tests
+        run: npx @iris/cli run --project ${{ vars.IRIS_PROJECT_ID }}
+        env:
+          IRIS_URL: ${{ vars.IRIS_URL }}
+          IRIS_KEY: ${{ secrets.IRIS_KEY }}
+```
+
+## Setup
+
+1. [Create an API key](/docs/cli-ci/api-keys) with the `CI` role in your project's settings.
+2. In the GitHub repo, add:
+   - **Secret** `IRIS_KEY` — the raw `iris_...` key
+   - **Variable** `IRIS_URL` — your Iris instance URL (e.g. `https://iris.example.com`)
+   - **Variable** `IRIS_PROJECT_ID` — the project ID from the project page
+3. Tests run against the project's configured base URL — point it at the environment you deploy in CI (staging, preview, etc.).
+
+The CLI exits `0` only when every run passes, so the job fails on any failed or cancelled test. For long suites, raise the wait ceiling with `--timeout` (default is 10 minutes).
+
+## Other CI providers
+
+The CLI is provider-agnostic — any system that can run `npx` works the same way. Set `IRIS_URL`/`IRIS_KEY` in the provider's secret store and call `npx @iris/cli run` in a pipeline step.

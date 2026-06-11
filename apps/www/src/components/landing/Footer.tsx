@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { GETTING_STARTED_URL, GITHUB_URL } from "@/lib/site"
+import { DOCS_URL, GETTING_STARTED_URL, GITHUB_URL } from "@/lib/site"
 import { GitHubIcon } from "./GitHubIcon"
 import { Logo } from "@iris/ui/components/logo"
 
@@ -18,7 +18,7 @@ const LINK_GROUPS: Array<{
   {
     heading: "Resources",
     links: [
-      { label: "Documentation", href: `${GITHUB_URL}#readme`, external: true },
+      { label: "Documentation", href: DOCS_URL, external: true },
       {
         label: "Contributing",
         href: `${GITHUB_URL}/blob/main/CONTRIBUTING.md`,

@@ -1,0 +1,40 @@
+---
+title: Writing tests
+description: How plain-English steps are executed, and how to write steps that pass reliably.
+---
+
+## Anatomy of a test
+
+A test is an ordered list of plain-English steps, plus an optional start URL. When a run starts, the agent opens the start URL in a fresh browser and executes the steps one by one. Each step ends in `PASSED`, `FAILED`, or `SKIPPED`, and the run fails if any step fails.
+
+Steps come in two flavors:
+
+- **Actions** — instructions that change the page: `Click the "New project" button`, `Fill the search box with "headphones"`, `Select "Germany" from the country dropdown`.
+- **Verifications** — assertions about the page: `Verify the success toast appears`, `Verify the cart total is "$24.00"`.
+
+## How the agent executes a step
+
+Iris hands each instruction to an AI agent (Stagehand + Gemini) that looks at the live page, decides how to perform the instruction, and acts — no selectors involved. Failed actions are retried before the step is marked failed.
+
+This means the agent is interpreting your words. The more concrete and observable the instruction, the more reliably it executes.
+
+## Tips for reliable steps
+
+**One action per step.** Split "Log in and open settings" into separate steps — smaller instructions are easier to execute and easier to debug when they fail.
+
+```text
+✗ Log in and go to the settings page and change the username
+✓ Enter {{EMAIL}} in the email field
+✓ Click the "Sign in" button
+✓ Click "Settings" in the sidebar
+```
+
+**Reference visible text.** The agent sees the page like a user does. `Click the "Create project" button` beats `Click the primary CTA`.
+
+**Make verifications observable.** Assert things that are visibly on the page: text, headings, counts, states. Avoid asserting internals the browser can't see.
+
+**Use variables for data.** Reference credentials and test data as `{{variable}}` instead of hardcoding — see [Variables](/docs/writing-tests/variables).
+
+**Extract shared setup into prerequisites.** If every test starts by logging in, make login its own test and declare it as a prerequisite — see [Prerequisites & folders](/docs/writing-tests/prerequisites-and-folders).
+
+**Author live.** Write steps in the live authoring session, where each one executes as you type it. You'll catch ambiguous phrasing immediately instead of during a CI run.

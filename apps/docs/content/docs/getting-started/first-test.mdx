@@ -1,0 +1,47 @@
+---
+title: Your first test
+description: Create a project, author a test in plain English, and watch it run.
+---
+
+## 1. Create a project
+
+After signing up, create a project from the dashboard. Give it a name and a **base URL** — the site your tests will run against (e.g. `https://staging.example.com`).
+
+## 2. Create a test
+
+Inside the project, create a new test. Every test has:
+
+- a **name** describing what it verifies
+- an optional **start URL** (defaults to the project base URL)
+- an ordered list of **steps** written in plain English
+
+## 3. Author steps in a live session
+
+Open the test in the authoring view. Iris launches a real browser session and streams it to your screen. As you write each step, it executes live so you can see exactly what the agent does:
+
+```text
+Click the "Products" link in the navigation
+Search for "wireless headphones"
+Verify at least one product card is shown
+```
+
+A few things you can do in the live session:
+
+- **Navigate** — go to a URL, back, forward, or reload without writing a step for it.
+- **Type directly** — dispatch keyboard/mouse input to the browser when you need manual control.
+- **Multiple tabs** — open and switch tabs; useful for flows that span windows.
+- **Replay** — re-run the steps written so far from the top.
+
+## 4. Run the test
+
+Save the test and trigger a run. The run executes in a fresh browser, streams frames live, and records every step's outcome. When it finishes you can review:
+
+- per-step pass/fail results with timings
+- screenshots captured during the run
+- browser console output and network events
+
+## Next steps
+
+- [Core concepts](/docs/getting-started/concepts) — the vocabulary Iris uses
+- [Writing tests](/docs/writing-tests) — tips for steps that pass reliably
+- [CI/CD integration](/docs/cli-ci) — run tests from your pipeline

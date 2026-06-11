@@ -29,6 +29,8 @@ export function FrameCanvas({
   onInteractiveModeChange,
   isBusy,
   statusLabel,
+  viewportWidth = 1280,
+  viewportHeight = 720,
 }: {
   show: boolean
   canvasRef: RefObject<HTMLCanvasElement | null>
@@ -39,7 +41,12 @@ export function FrameCanvas({
   onInteractiveModeChange: (v: boolean) => void
   isBusy: boolean
   statusLabel: string
+  viewportWidth?: number
+  viewportHeight?: number
 }) {
+  // Shape the mock browser window to the test's viewport so phone sizes get
+  // a phone-sized window instead of letterboxing inside a desktop frame.
+  const aspect = viewportWidth / viewportHeight
   return (
     <div
       className={
@@ -48,15 +55,18 @@ export function FrameCanvas({
           : "h-0 overflow-hidden"
       }
     >
-      <div className="w-full max-w-4xl space-y-3">
+      <div
+        className="w-full space-y-3"
+        style={{ maxWidth: `min(56rem, calc(60vh * ${aspect.toFixed(4)}))` }}
+      >
         <div className="relative flex flex-col overflow-hidden rounded-xl border border-border bg-black shadow-xl">
           {/* Mock Browser Chrome */}
           <div className="flex h-9 shrink-0 items-center gap-2 border-b border-border bg-muted/80 px-4">
             <div className="h-2.5 w-2.5 rounded-full bg-destructive/80" />
             <div className="h-2.5 w-2.5 rounded-full bg-muted-foreground/60" />
             <div className="h-2.5 w-2.5 rounded-full bg-primary/80" />
-            <div className="mr-8 flex flex-1 justify-center">
-              <div className="flex h-5 w-64 items-center justify-center rounded-md bg-background/50 font-mono text-[10px] text-muted-foreground/50 select-none">
+            <div className="flex min-w-0 flex-1 justify-center">
+              <div className="flex h-5 w-full max-w-64 items-center justify-center truncate rounded-md bg-background/50 px-2 font-mono text-[10px] text-muted-foreground/50 select-none">
                 live session
               </div>
             </div>
@@ -65,10 +75,10 @@ export function FrameCanvas({
           <div className="relative">
             <canvas
               ref={canvasRef}
-              width={1280}
-              height={720}
+              width={viewportWidth}
+              height={viewportHeight}
               tabIndex={0}
-              className={`aspect-video w-full bg-black transition-colors outline-none ${
+              className={`block h-auto w-full bg-black transition-colors outline-none ${
                 sessionState === "ready" && !runActive && interactiveMode
                   ? "cursor-crosshair"
                   : "cursor-default"

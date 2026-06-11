@@ -1,4 +1,12 @@
-import { IsString, IsOptional, IsBoolean, IsArray } from 'class-validator'
+import {
+  IsString,
+  IsOptional,
+  IsBoolean,
+  IsArray,
+  IsInt,
+  Min,
+  Max,
+} from "class-validator"
 
 export class CreateTestDto {
   @IsString()
@@ -11,6 +19,18 @@ export class CreateTestDto {
   @IsOptional()
   @IsString()
   startUrl?: string
+
+  @IsOptional()
+  @IsInt()
+  @Min(240)
+  @Max(3840)
+  viewportWidth?: number
+
+  @IsOptional()
+  @IsInt()
+  @Min(240)
+  @Max(2160)
+  viewportHeight?: number
 
   @IsOptional()
   @IsArray()

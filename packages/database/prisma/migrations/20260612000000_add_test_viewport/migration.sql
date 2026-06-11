@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "tests" ADD COLUMN     "viewportWidth" INTEGER NOT NULL DEFAULT 1280,
+ADD COLUMN     "viewportHeight" INTEGER NOT NULL DEFAULT 720;

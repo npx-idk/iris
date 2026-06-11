@@ -17,6 +17,7 @@ import { SeekDto } from "./dto/seek.dto"
 import { DispatchInputDto } from "./dto/dispatch-input.dto"
 import { NewTabDto } from "./dto/new-tab.dto"
 import { NavigateDto } from "./dto/navigate.dto"
+import { SetViewportDto } from "./dto/set-viewport.dto"
 
 @UseGuards(AuthGuard)
 @Controller()
@@ -73,6 +74,16 @@ export class AuthoringController {
       dto.toFlatPos,
       dto.navigate
     )
+  }
+
+  @Post("author/:sessionId/viewport")
+  @HttpCode(204)
+  setViewport(
+    @CurrentUser() user: RequestUser,
+    @Param("sessionId") sessionId: string,
+    @Body() dto: SetViewportDto
+  ) {
+    return this.authoring.setViewport(sessionId, user.id, dto.width, dto.height)
   }
 
   @Post("author/:sessionId/navigate")

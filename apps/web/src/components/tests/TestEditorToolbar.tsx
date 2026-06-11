@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@iris/ui/components/select"
+import { ViewportPicker } from "./ViewportPicker"
 
 interface TestEditorToolbarProps {
   test: TestWithSteps | undefined
@@ -36,6 +37,7 @@ interface TestEditorToolbarProps {
   onSeekAll: () => void
   onCloseSession: () => void
   onToggleContinueOnFailure: (v: boolean) => void
+  onViewportChange: (width: number, height: number) => void
   onOpenReport: () => void
   onRunTest: () => void
 }
@@ -59,6 +61,7 @@ export function TestEditorToolbar({
   onSeekAll,
   onCloseSession,
   onToggleContinueOnFailure,
+  onViewportChange,
   onOpenReport,
   onRunTest,
 }: TestEditorToolbarProps) {
@@ -145,6 +148,14 @@ export function TestEditorToolbar({
       </div>
 
       <div className="flex shrink-0 items-center gap-2">
+        {!runMode && test && (
+          <ViewportPicker
+            width={test.viewportWidth}
+            height={test.viewportHeight}
+            disabled={isBusy}
+            onChange={onViewportChange}
+          />
+        )}
         {!runMode && isReady && hasContent && (
           <Button variant="ghost" size="sm" onClick={onSeekAll}>
             Start over

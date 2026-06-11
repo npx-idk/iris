@@ -1,5 +1,5 @@
 import { ConflictException, NotFoundException } from "@nestjs/common"
-import { createStagehand } from "@iris/agent"
+import { createStagehand, applyViewport, type Viewport } from "@iris/agent"
 import type { BrowserTab, BrowserEvent } from "@iris/common"
 import { DispatchInputDto } from "./dto/dispatch-input.dto"
 import { BrowserEventCapture } from "./browser-events"
@@ -20,6 +20,7 @@ export class BrowserSession {
   private stagehand: StagehandSession
   private events: BrowserEventCapture
   private screenshotTimer: ReturnType<typeof setInterval> | undefined
+  private viewport: Viewport | undefined
 
   constructor(
     id: string,
@@ -37,6 +38,13 @@ export class BrowserSession {
 
   async attachPage(p: any): Promise<void> {
     await this.events.attachPage(p)
+    // New tabs start without the emulation override
+    if (this.viewport) await applyViewport(this.stagehand, this.viewport)
+  }
+
+  async setViewport(viewport: Viewport): Promise<void> {
+    this.viewport = viewport
+    await applyViewport(this.stagehand, viewport)
   }
 
   startScreencast(

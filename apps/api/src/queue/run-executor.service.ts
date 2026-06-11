@@ -56,6 +56,7 @@ export class RunExecutorService {
         ...env.stagehand,
         projectVariables,
         continueOnFailure: test.continueOnFailure,
+        viewport: { width: test.viewportWidth, height: test.viewportHeight },
 
         onStepComplete: async (log: StepLog) => {
           const checkCancel = await prisma.testRun.findUnique({

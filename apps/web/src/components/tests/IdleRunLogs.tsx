@@ -21,6 +21,8 @@ export function IdleRunLogs({
   tab,
   onTabChange,
   consoleEndRef,
+  viewportWidth,
+  viewportHeight,
 }: {
   lastRunId: string | null
   runEvents?: BrowserEventLog | null
@@ -28,13 +30,19 @@ export function IdleRunLogs({
   tab: DevToolsTab
   onTabChange: (t: DevToolsTab) => void
   consoleEndRef: RefObject<HTMLDivElement | null>
+  viewportWidth?: number
+  viewportHeight?: number
 }) {
   return (
     <div className="flex-1 overflow-y-auto">
       <div className="mx-auto max-w-4xl space-y-4 p-6">
         {lastRunId ? (
           <>
-            <FramePlayer runId={lastRunId} />
+            <FramePlayer
+              runId={lastRunId}
+              viewportWidth={viewportWidth}
+              viewportHeight={viewportHeight}
+            />
 
             {/* Logs below recording */}
             {runEvents && (

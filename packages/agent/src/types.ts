@@ -1,8 +1,8 @@
-export type StepResult = 'PASSED' | 'FAILED' | 'SKIPPED'
+export type StepResult = "PASSED" | "FAILED" | "SKIPPED"
 // Terminal statuses only — matches CompletedRunStatus from @iris/common
-export type RunStatus = 'PASSED' | 'FAILED' | 'CANCELLED'
-export type BrowserEnv = 'LOCAL' | 'BROWSERBASE'
-export type CacheStatus = 'HIT' | 'MISS' | undefined
+export type RunStatus = "PASSED" | "FAILED" | "CANCELLED"
+export type BrowserEnv = "LOCAL" | "BROWSERBASE"
+export type CacheStatus = "HIT" | "MISS" | undefined
 
 export interface AgentStep {
   id: string
@@ -67,7 +67,7 @@ export interface StoredNetworkEntry {
 export interface StoredConsoleEntry {
   id: string
   timestamp: number
-  kind: 'log' | 'info' | 'warn' | 'error'
+  kind: "log" | "info" | "warn" | "error"
   message: string
 }
 
@@ -76,12 +76,18 @@ export interface BrowserEventLog {
   console: StoredConsoleEntry[]
 }
 
+export interface Viewport {
+  width: number
+  height: number
+}
+
 export interface RunConfig {
   runId: string
   testId: string
   startUrl: string
   steps: AgentStep[]
   projectVariables?: Record<string, string>
+  viewport?: Viewport
   env: BrowserEnv
   geminiApiKey: string
   browserbaseApiKey?: string

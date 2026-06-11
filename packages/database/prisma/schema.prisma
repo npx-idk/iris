@@ -224,6 +224,8 @@ model Test {
   order             Int      @default(0)
   enabled           Boolean  @default(true)
   continueOnFailure Boolean  @default(false)
+  viewportWidth     Int      @default(1280)
+  viewportHeight    Int      @default(720)
   tags              String[] @default([])
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt

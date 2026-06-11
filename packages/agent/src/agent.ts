@@ -1,33 +1,80 @@
-import { Stagehand } from '@browserbasehq/stagehand'
-import { z } from 'zod'
-import { RunConfig, RunResult, StepLog, StepAction, RunMetrics, CacheStatus, StoredNetworkEntry, StoredConsoleEntry } from './types'
+import { Stagehand } from "@browserbasehq/stagehand"
+import { z } from "zod"
+import {
+  RunConfig,
+  RunResult,
+  StepLog,
+  StepAction,
+  RunMetrics,
+  CacheStatus,
+  StoredNetworkEntry,
+  StoredConsoleEntry,
+  Viewport,
+} from "./types"
 
-const VERIFY_RE = /^\s*(verify|check|assert|confirm|ensure|validate|make\s+sure|is\s+there|are\s+there|does|should\s+be|should\s+see|should\s+have|should\s+not|must\s+be|must\s+have|varify)\b/i
+export const DEFAULT_VIEWPORT: Viewport = { width: 1280, height: 720 }
 
-function interpolate(instruction: string, vars: Record<string, string>): string {
-  return instruction.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] ?? `{{${key}}}`)
+// Emulates the viewport DevTools-style so a shared browser session can switch
+// size per test without relaunching. `mobile` mirrors DevTools behaviour:
+// phone-sized widths get the mobile viewport meta / touch quirks.
+export async function applyViewport(
+  stagehand: Stagehand,
+  viewport: Viewport
+): Promise<void> {
+  for (const page of stagehand.context.pages()) {
+    await (page as any)
+      .sendCDP("Emulation.setDeviceMetricsOverride", {
+        width: viewport.width,
+        height: viewport.height,
+        deviceScaleFactor: 1,
+        mobile: viewport.width < 768,
+      })
+      .catch(() => {})
+  }
+}
+
+const VERIFY_RE =
+  /^\s*(verify|check|assert|confirm|ensure|validate|make\s+sure|is\s+there|are\s+there|does|should\s+be|should\s+see|should\s+have|should\s+not|must\s+be|must\s+have|varify)\b/i
+
+function interpolate(
+  instruction: string,
+  vars: Record<string, string>
+): string {
+  return instruction.replace(
+    /\{\{(\w+)\}\}/g,
+    (_, key) => vars[key] ?? `{{${key}}}`
+  )
 }
 
 const verifySchema = z.object({ met: z.boolean(), observation: z.string() })
 
-type StepActResult = { success: boolean; message?: string; cacheStatus?: CacheStatus; actions?: StepAction[] }
+type StepActResult = {
+  success: boolean
+  message?: string
+  cacheStatus?: CacheStatus
+  actions?: StepAction[]
+}
 
 // Routes verification instructions to extract(), action instructions to retryAct().
 // Verification steps retry up to 3 times (2 s apart) to handle post-navigation delays.
 export async function executeStep(
   stagehand: Stagehand,
   instruction: string,
-  options?: { variables?: Record<string, string> },
+  options?: { variables?: Record<string, string> }
 ): Promise<StepActResult> {
   if (VERIFY_RE.test(instruction)) {
     let lastMessage: string | undefined
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
-        const page = stagehand.context.activePage() ?? stagehand.context.pages()[0]
+        const page =
+          stagehand.context.activePage() ?? stagehand.context.pages()[0]
         if (page) {
-          await page.waitForLoadState('domcontentloaded').catch(() => {})
+          await page.waitForLoadState("domcontentloaded").catch(() => {})
         }
-        const result = await stagehand.extract(instruction, verifySchema as any) as { met: boolean; observation: string }
+        const result = (await stagehand.extract(
+          instruction,
+          verifySchema as any
+        )) as { met: boolean; observation: string }
         if (result.met) return { success: true }
         lastMessage = result.observation
       } catch (err) {
@@ -40,14 +87,24 @@ export async function executeStep(
   return retryAct(stagehand, instruction, options)
 }
 
-function buildStagehandConfig(config: Pick<RunConfig, 'env' | 'geminiApiKey' | 'browserbaseApiKey' | 'browserbaseProjectId'>) {
+function buildStagehandConfig(
+  config: Pick<
+    RunConfig,
+    | "env"
+    | "geminiApiKey"
+    | "browserbaseApiKey"
+    | "browserbaseProjectId"
+    | "viewport"
+  >
+) {
+  const viewport = config.viewport ?? DEFAULT_VIEWPORT
   return {
     env: config.env,
     model: {
-      modelName: 'google/gemini-2.5-flash',
+      modelName: "google/gemini-2.5-flash",
       apiKey: config.geminiApiKey,
     },
-    ...(config.env === 'BROWSERBASE' && {
+    ...(config.env === "BROWSERBASE" && {
       apiKey: config.browserbaseApiKey,
       projectId: config.browserbaseProjectId,
       serverCache: true,
@@ -56,14 +113,14 @@ function buildStagehandConfig(config: Pick<RunConfig, 'env' | 'geminiApiKey' | '
           blockAds: true,
           solveCaptchas: true,
           recordSession: true,
-          viewport: { width: 1280, height: 720 },
+          viewport,
         },
       },
     }),
-    ...(config.env === 'LOCAL' && {
+    ...(config.env === "LOCAL" && {
       localBrowserLaunchOptions: {
         headless: true,
-        viewport: { width: 1280, height: 720 },
+        viewport,
       },
     }),
     selfHeal: true,
@@ -75,7 +132,14 @@ function buildStagehandConfig(config: Pick<RunConfig, 'env' | 'geminiApiKey' | '
 
 // Creates and initialises a single browser session to be shared across a suite of tests.
 export async function createStagehand(
-  config: Pick<RunConfig, 'env' | 'geminiApiKey' | 'browserbaseApiKey' | 'browserbaseProjectId'>,
+  config: Pick<
+    RunConfig,
+    | "env"
+    | "geminiApiKey"
+    | "browserbaseApiKey"
+    | "browserbaseProjectId"
+    | "viewport"
+  >
 ): Promise<Stagehand> {
   const stagehand = new Stagehand(buildStagehandConfig(config) as any)
   await stagehand.init()
@@ -86,12 +150,12 @@ export async function retryAct(
   stagehand: Stagehand,
   instruction: string,
   options?: { variables?: Record<string, string> },
-  maxAttempts = 3,
+  maxAttempts = 3
 ): Promise<StepActResult> {
   let lastErr: unknown
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
-      const raw = await stagehand.act(instruction, options) as any
+      const raw = (await stagehand.act(instruction, options)) as any
       return {
         success: raw.success,
         message: raw.message,
@@ -114,15 +178,20 @@ export async function retryAct(
 // Returns a function that attaches listeners to any pages not yet instrumented.
 // Call it before each step to pick up pages opened mid-test.
 async function attachBrowserEventListeners(
-  context: Stagehand['context'],
+  context: Stagehand["context"],
   network: StoredNetworkEntry[],
-  console_: StoredConsoleEntry[],
+  console_: StoredConsoleEntry[]
 ): Promise<() => Promise<void>> {
   const listeningPages = new Set<object>()
 
-  const kindMap: Record<string, StoredConsoleEntry['kind']> = {
-    log: 'log', info: 'info', warn: 'warn', error: 'error',
-    debug: 'log', verbose: 'log', warning: 'warn',
+  const kindMap: Record<string, StoredConsoleEntry["kind"]> = {
+    log: "log",
+    info: "info",
+    warn: "warn",
+    error: "error",
+    debug: "log",
+    verbose: "log",
+    warning: "warn",
   }
 
   async function setupPage(page: any): Promise<void> {
@@ -130,52 +199,66 @@ async function attachBrowserEventListeners(
     listeningPages.add(page)
 
     // reqMeta is per-page: CDP requestIds are scoped to a CDP session, not global
-    const reqMeta = new Map<string, { startTime: number; method: string; url: string; requestHeaders?: Record<string, string>; requestBody?: string }>()
+    const reqMeta = new Map<
+      string,
+      {
+        startTime: number
+        method: string
+        url: string
+        requestHeaders?: Record<string, string>
+        requestBody?: string
+      }
+    >()
 
     // Console via Stagehand's official API
-    page.on('console', (msg: any) => {
+    page.on("console", (msg: any) => {
       try {
         console_.push({
           id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
           timestamp: msg.timestamp?.() ?? Date.now(),
-          kind: kindMap[msg.type?.() ?? ''] ?? 'log',
-          message: msg.text?.() ?? '',
+          kind: kindMap[msg.type?.() ?? ""] ?? "log",
+          message: msg.text?.() ?? "",
         })
-      } catch { /* non-fatal */ }
+      } catch {
+        /* non-fatal */
+      }
     })
 
     // Enable Network CDP domain then listen on the underlying CDP session
-    await page.sendCDP('Network.enable', {})
+    await page.sendCDP("Network.enable", {})
     const session: any = (page as any).mainSession
     if (!session?.on) {
-      console.error('[iris-agent] Network.enable sent but mainSession has no .on — network capture unavailable for this page')
+      console.error(
+        "[iris-agent] Network.enable sent but mainSession has no .on — network capture unavailable for this page"
+      )
       return
     }
 
-    session.on('Network.requestWillBeSent', (params: any) => {
-      const url: string = params.request?.url ?? ''
-      if (!url || url.startsWith('data:') || url.startsWith('blob:')) return
+    session.on("Network.requestWillBeSent", (params: any) => {
+      const url: string = params.request?.url ?? ""
+      if (!url || url.startsWith("data:") || url.startsWith("blob:")) return
       reqMeta.set(params.requestId, {
         startTime: Date.now(),
-        method: params.request?.method ?? 'GET',
+        method: params.request?.method ?? "GET",
         url,
         requestHeaders: params.request?.headers,
         requestBody: params.request?.postData,
       })
     })
 
-    session.on('Network.responseReceived', (params: any) => {
-      const url: string = params.response?.url ?? ''
-      if (!url || url.startsWith('data:') || url.startsWith('blob:')) return
+    session.on("Network.responseReceived", (params: any) => {
+      const url: string = params.response?.url ?? ""
+      if (!url || url.startsWith("data:") || url.startsWith("blob:")) return
       const meta = reqMeta.get(params.requestId)
-      const contentType: string = params.response?.headers?.['content-type'] ?? ''
+      const contentType: string =
+        params.response?.headers?.["content-type"] ?? ""
       network.push({
         id: params.requestId,
         timestamp: meta?.startTime ?? Date.now(),
-        method: meta?.method ?? 'GET',
+        method: meta?.method ?? "GET",
         url,
         status: params.response?.status ?? 0,
-        mimeType: (contentType.split(';')[0] ?? '').trim(),
+        mimeType: (contentType.split(";")[0] ?? "").trim(),
         duration: Date.now() - (meta?.startTime ?? Date.now()),
         requestHeaders: meta?.requestHeaders,
         responseHeaders: params.response?.headers,
@@ -185,7 +268,7 @@ async function attachBrowserEventListeners(
     })
 
     // Clean up entries for requests that never received a response (aborted/timed-out)
-    session.on('Network.loadingFailed', (params: any) => {
+    session.on("Network.loadingFailed", (params: any) => {
       reqMeta.delete(params.requestId)
     })
   }
@@ -193,7 +276,7 @@ async function attachBrowserEventListeners(
   async function attachToNewPages(): Promise<void> {
     for (const page of context.pages()) {
       await setupPage(page).catch((e) => {
-        console.error('[iris-agent] setupPage failed:', e)
+        console.error("[iris-agent] setupPage failed:", e)
       })
     }
   }
@@ -207,7 +290,7 @@ async function attachBrowserEventListeners(
 // and is NOT closed on completion — the caller owns it.
 export async function runTest(
   config: RunConfig,
-  sharedStagehand?: Stagehand,
+  sharedStagehand?: Stagehand
 ): Promise<RunResult> {
   const startedAt = Date.now()
   const stepLogs: StepLog[] = []
@@ -215,34 +298,45 @@ export async function runTest(
   if (config.steps.length === 0) {
     return {
       runId: config.runId,
-      status: 'FAILED',
+      status: "FAILED",
       stepLogs: [],
-      metrics: { totalTokens: 0, inferenceTimeMs: 0, cacheHits: 0, cacheMisses: 0 },
-      errorMessage: 'Test has no steps',
+      metrics: {
+        totalTokens: 0,
+        inferenceTimeMs: 0,
+        cacheHits: 0,
+        cacheMisses: 0,
+      },
+      errorMessage: "Test has no steps",
       totalDurationMs: 0,
     }
   }
 
   const ownsStagehand = !sharedStagehand
-  const stagehand: Stagehand = sharedStagehand ?? (() => {
-    return new Stagehand(buildStagehandConfig(config) as any)
-  })()
+  const stagehand: Stagehand =
+    sharedStagehand ??
+    (() => {
+      return new Stagehand(buildStagehandConfig(config) as any)
+    })()
 
   if (ownsStagehand) await stagehand.init()
 
   const capturedNetwork: StoredNetworkEntry[] = []
   const capturedConsole: StoredConsoleEntry[] = []
-  const attachToNewPages = await attachBrowserEventListeners(stagehand.context, capturedNetwork, capturedConsole)
+  const attachToNewPages = await attachBrowserEventListeners(
+    stagehand.context,
+    capturedNetwork,
+    capturedConsole
+  )
 
   let liveViewUrl: string | undefined
-  if (config.env === 'BROWSERBASE') {
+  if (config.env === "BROWSERBASE") {
     liveViewUrl = stagehand.browserbaseDebugURL ?? undefined
   } else {
     liveViewUrl = `ws://localhost:${process.env.API_PORT ?? 3000}/sessions/${config.runId}/stream`
   }
 
   let screenshotInterval: ReturnType<typeof setInterval> | undefined
-  if (config.env === 'LOCAL' && config.onFrame) {
+  if (config.env === "LOCAL" && config.onFrame) {
     let frameInFlight = false
     screenshotInterval = setInterval(async () => {
       if (frameInFlight) return
@@ -250,8 +344,11 @@ export async function runTest(
       try {
         const page = stagehand.context.activePage()
         if (page) {
-          const buf = await page.screenshot({ type: 'jpeg', quality: 40 } as any)
-          await config.onFrame!(buf.toString('base64'))
+          const buf = await page.screenshot({
+            type: "jpeg",
+            quality: 40,
+          } as any)
+          await config.onFrame!(buf.toString("base64"))
         }
       } catch {
         // Non-fatal — page may not be ready
@@ -276,15 +373,20 @@ export async function runTest(
     try {
       const p = stagehand.context.activePage() ?? stagehand.context.pages()[0]
       if (!p) return undefined
-      const buf = await p.screenshot({ type: 'jpeg', quality: 80 } as any)
-      return buf.toString('base64')
-    } catch { return undefined }
+      const buf = await p.screenshot({ type: "jpeg", quality: 80 } as any)
+      return buf.toString("base64")
+    } catch {
+      return undefined
+    }
   }
 
   try {
+    // Shared sessions keep the previous test's emulation, so always re-apply.
+    if (config.viewport) await applyViewport(stagehand, config.viewport)
+
     const page = stagehand.context.activePage() ?? stagehand.context.pages()[0]
-    if (!page) throw new Error('No browser page available after init')
-    await page.goto(config.startUrl, { waitUntil: 'domcontentloaded' })
+    if (!page) throw new Error("No browser page available after init")
+    await page.goto(config.startUrl, { waitUntil: "domcontentloaded" })
 
     const steps = [...config.steps].sort((a, b) => a.stepIndex - b.stepIndex)
 
@@ -293,13 +395,17 @@ export async function runTest(
     for (const step of steps) {
       // Pick up any pages opened since the last step (e.g. target="_blank" links)
       await attachToNewPages()
+      // New tabs start without the emulation override; idempotent for existing pages.
+      if (config.viewport) await applyViewport(stagehand, config.viewport)
 
       const stepStart = Date.now()
       let actResult: StepActResult
 
       try {
-        if (typeof step.instruction !== 'string' || !step.instruction.trim()) {
-          throw new Error(`Step ${step.stepIndex}: instruction must be a non-empty string, got: ${JSON.stringify(step.instruction)}`)
+        if (typeof step.instruction !== "string" || !step.instruction.trim()) {
+          throw new Error(
+            `Step ${step.stepIndex}: instruction must be a non-empty string, got: ${JSON.stringify(step.instruction)}`
+          )
         }
         const resolvedInstruction = config.projectVariables
           ? interpolate(step.instruction, config.projectVariables)
@@ -313,7 +419,7 @@ export async function runTest(
           testStepId: step.id,
           instruction: step.instruction,
           description: step.description,
-          result: 'FAILED',
+          result: "FAILED",
           durationMs: Date.now() - stepStart,
           errorMessage: String(err),
           screenshotBase64: await captureScreenshot(),
@@ -325,13 +431,19 @@ export async function runTest(
           await closeIfOwned()
           return {
             runId: config.runId,
-            status: 'FAILED',
+            status: "FAILED",
             stepLogs,
-            metrics: buildMetrics(stepLogs, ownsStagehand ? await safeGetMetrics(stagehand) : null),
+            metrics: buildMetrics(
+              stepLogs,
+              ownsStagehand ? await safeGetMetrics(stagehand) : null
+            ),
             liveViewUrl,
             errorMessage: `Step ${step.stepIndex + 1} failed: ${String(err)}`,
             totalDurationMs: Date.now() - startedAt,
-            browserEvents: { network: capturedNetwork, console: capturedConsole },
+            browserEvents: {
+              network: capturedNetwork,
+              console: capturedConsole,
+            },
           }
         }
         firstFailure ??= `Step ${step.stepIndex + 1} failed: ${String(err)}`
@@ -343,7 +455,7 @@ export async function runTest(
         testStepId: step.id,
         instruction: step.instruction,
         description: step.description,
-        result: actResult.success ? 'PASSED' : 'FAILED',
+        result: actResult.success ? "PASSED" : "FAILED",
         cacheStatus: actResult.cacheStatus,
         durationMs: Date.now() - stepStart,
         errorMessage: actResult.success ? undefined : actResult.message,
@@ -360,13 +472,19 @@ export async function runTest(
           await closeIfOwned()
           return {
             runId: config.runId,
-            status: 'FAILED',
+            status: "FAILED",
             stepLogs,
-            metrics: buildMetrics(stepLogs, ownsStagehand ? await safeGetMetrics(stagehand) : null),
+            metrics: buildMetrics(
+              stepLogs,
+              ownsStagehand ? await safeGetMetrics(stagehand) : null
+            ),
             liveViewUrl,
             errorMessage: `Step ${step.stepIndex + 1} failed: ${actResult.message}`,
             totalDurationMs: Date.now() - startedAt,
-            browserEvents: { network: capturedNetwork, console: capturedConsole },
+            browserEvents: {
+              network: capturedNetwork,
+              console: capturedConsole,
+            },
           }
         }
         firstFailure ??= `Step ${step.stepIndex + 1} failed: ${actResult.message}`
@@ -379,7 +497,7 @@ export async function runTest(
 
     return {
       runId: config.runId,
-      status: firstFailure ? 'FAILED' : 'PASSED',
+      status: firstFailure ? "FAILED" : "PASSED",
       stepLogs,
       metrics: buildMetrics(stepLogs, rawMetrics),
       liveViewUrl,
@@ -387,15 +505,19 @@ export async function runTest(
       totalDurationMs: Date.now() - startedAt,
       browserEvents: { network: capturedNetwork, console: capturedConsole },
     }
-
   } catch (err) {
     stopScreencast()
-    if (ownsStagehand) await stagehand.close().catch(() => { })
+    if (ownsStagehand) await stagehand.close().catch(() => {})
     return {
       runId: config.runId,
-      status: 'FAILED',
+      status: "FAILED",
       stepLogs,
-      metrics: { totalTokens: 0, inferenceTimeMs: 0, cacheHits: 0, cacheMisses: 0 },
+      metrics: {
+        totalTokens: 0,
+        inferenceTimeMs: 0,
+        cacheHits: 0,
+        cacheMisses: 0,
+      },
       liveViewUrl,
       errorMessage: String(err),
       totalDurationMs: Date.now() - startedAt,
@@ -405,16 +527,21 @@ export async function runTest(
 }
 
 async function safeGetMetrics(stagehand: Stagehand): Promise<any> {
-  try { return await stagehand.metrics } catch { return null }
+  try {
+    return await stagehand.metrics
+  } catch {
+    return null
+  }
 }
 
 function buildMetrics(stepLogs: StepLog[], rawMetrics: any): RunMetrics {
   return {
     totalTokens: rawMetrics
-      ? (rawMetrics.totalPromptTokens ?? 0) + (rawMetrics.totalCompletionTokens ?? 0)
+      ? (rawMetrics.totalPromptTokens ?? 0) +
+        (rawMetrics.totalCompletionTokens ?? 0)
       : 0,
     inferenceTimeMs: rawMetrics?.totalInferenceTimeMs ?? 0,
-    cacheHits: stepLogs.filter((s) => s.cacheStatus === 'HIT').length,
-    cacheMisses: stepLogs.filter((s) => s.cacheStatus === 'MISS').length,
+    cacheHits: stepLogs.filter((s) => s.cacheStatus === "HIT").length,
+    cacheMisses: stepLogs.filter((s) => s.cacheStatus === "MISS").length,
   }
 }

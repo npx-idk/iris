@@ -115,6 +115,8 @@ export class TestsService {
         name: dto.name,
         description: dto.description,
         startUrl: dto.startUrl,
+        viewportWidth: dto.viewportWidth,
+        viewportHeight: dto.viewportHeight,
         tags: dto.tags ?? [],
         enabled: dto.enabled ?? true,
         order,

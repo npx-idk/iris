@@ -67,6 +67,12 @@ export class AuthoringService {
       }
     )
 
+    // Emulate the test's viewport before first paint so frames stream at the right size.
+    await session.setViewport({
+      width: test.viewportWidth,
+      height: test.viewportHeight,
+    })
+
     // Navigate to start URL so the screenshot loop has a page to capture immediately.
     const mainStartUrl = test.startUrl ?? test.project.baseUrl
     await session.gotoUrl(mainStartUrl)
@@ -184,6 +190,16 @@ export class AuthoringService {
   ): Promise<void> {
     const session = this.registry.get(sessionId, userId)
     await session.navigate(url)
+  }
+
+  async setViewport(
+    sessionId: string,
+    userId: string,
+    width: number,
+    height: number
+  ): Promise<void> {
+    const session = this.registry.get(sessionId, userId)
+    await session.setViewport({ width, height })
   }
 
   async goBack(sessionId: string, userId: string): Promise<void> {

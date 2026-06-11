@@ -49,6 +49,8 @@ interface BrowserPanelProps {
   selectedRunStep?: TestRunStep
   onClearSelectedStep?: () => void
   runEvents?: BrowserEventLog | null
+  viewportWidth?: number
+  viewportHeight?: number
 }
 
 /**
@@ -89,6 +91,8 @@ export function BrowserPanel({
   selectedRunStep,
   onClearSelectedStep,
   runEvents,
+  viewportWidth,
+  viewportHeight,
 }: BrowserPanelProps) {
   const [bottomTab, setBottomTab] = useState<DevToolsTab>("network")
 
@@ -140,6 +144,8 @@ export function BrowserPanel({
         onInteractiveModeChange={onInteractiveModeChange}
         isBusy={isBusy}
         statusLabel={statusLabel}
+        viewportWidth={viewportWidth}
+        viewportHeight={viewportHeight}
       />
 
       {!showCanvas && (
@@ -150,6 +156,8 @@ export function BrowserPanel({
           tab={bottomTab}
           onTabChange={setBottomTab}
           consoleEndRef={consoleEndRef}
+          viewportWidth={viewportWidth}
+          viewportHeight={viewportHeight}
         />
       )}
 

@@ -9,16 +9,40 @@ import { Button } from "@iris/ui/components/animate-ui/components/buttons/button
 interface FramePlayerProps {
   runId: string
   className?: string
+  viewportWidth?: number
+  viewportHeight?: number
 }
 
 const FPS = 4
 
-export function FramePlayer({ runId, className }: FramePlayerProps) {
+export function FramePlayer({
+  runId,
+  className,
+  viewportWidth,
+  viewportHeight,
+}: FramePlayerProps) {
   const [frames, setFrames] = useState<string[]>([])
   const [current, setCurrent] = useState(0)
   const [playing, setPlaying] = useState(false)
   const [loading, setLoading] = useState(true)
+  // Frame aspect ratio (w/h) shapes the mock browser window so phone
+  // recordings get a phone-sized window. Seeded from the test's viewport,
+  // refined from the actual frame dimensions once one loads (old recordings
+  // may have been captured at a different size than the current setting).
+  const [aspect, setAspect] = useState<number | null>(null)
+  const fallbackAspect =
+    viewportWidth && viewportHeight ? viewportWidth / viewportHeight : 16 / 9
+  const effectiveAspect = aspect ?? fallbackAspect
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  // Cached images can be complete before React attaches onLoad, so measure
+  // from the ref callback as well.
+  function captureAspect(img: HTMLImageElement | null) {
+    if (img?.complete && img.naturalWidth && img.naturalHeight) {
+      const a = img.naturalWidth / img.naturalHeight
+      setAspect((prev) => (prev === a ? prev : a))
+    }
+  }
 
   useEffect(() => {
     setLoading(true)
@@ -77,14 +101,19 @@ export function FramePlayer({ runId, className }: FramePlayerProps) {
 
   return (
     <div className={`flex flex-col gap-3 ${className ?? ""}`}>
-      <div className="relative flex flex-col overflow-hidden rounded-xl border border-border bg-black shadow-xl">
+      <div
+        className="relative mx-auto flex w-full flex-col overflow-hidden rounded-xl border border-border bg-black shadow-xl"
+        style={{
+          maxWidth: `min(100%, calc(60vh * ${effectiveAspect.toFixed(4)}))`,
+        }}
+      >
         {/* Mock Browser Chrome */}
         <div className="flex h-9 shrink-0 items-center gap-2 border-b border-border bg-muted/80 px-4">
           <div className="h-2.5 w-2.5 rounded-full bg-destructive/80" />
           <div className="h-2.5 w-2.5 rounded-full bg-muted-foreground/60" />
           <div className="h-2.5 w-2.5 rounded-full bg-primary/80" />
-          <div className="mr-8 flex flex-1 justify-center">
-            <div className="flex h-5 w-64 items-center justify-center rounded-md bg-background/50 font-mono text-[10px] text-muted-foreground/50 select-none">
+          <div className="flex min-w-0 flex-1 justify-center">
+            <div className="flex h-5 w-full max-w-64 items-center justify-center truncate rounded-md bg-background/50 px-2 font-mono text-[10px] text-muted-foreground/50 select-none">
               recording playback
             </div>
           </div>
@@ -99,7 +128,9 @@ export function FramePlayer({ runId, className }: FramePlayerProps) {
                 : `${apiBase}${frames[current]}`
             }
             alt={`Frame ${current + 1}`}
-            className="aspect-video w-full object-contain"
+            ref={captureAspect}
+            onLoad={(e) => captureAspect(e.currentTarget)}
+            className="h-auto w-full"
           />
           <div className="absolute right-2 bottom-2 flex items-center gap-1.5 rounded-md bg-black/60 px-2 py-1 backdrop-blur-sm">
             <span className="text-xs text-foreground/70 tabular-nums">

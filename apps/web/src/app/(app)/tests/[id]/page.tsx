@@ -12,6 +12,7 @@ const ReportSheet = dynamic(
   { ssr: false }
 )
 import { api } from "@/lib/api"
+import { drawFrame } from "@/lib/canvas"
 import { useProject, useWorkspaceVariables } from "@/hooks/queries"
 import { TestWithSteps, BrowserTab } from "@/lib/types"
 import { ROUTES } from "@/lib/routes"
@@ -147,12 +148,7 @@ export default function TestPage() {
 
   useSocketSession(sessionId, {
     onFrame: (frameBase64) => {
-      const canvas = canvasRef.current
-      if (!canvas) return
-      const ctx = canvas.getContext("2d")
-      const img = new Image()
-      img.onload = () => ctx?.drawImage(img, 0, 0, canvas.width, canvas.height)
-      img.src = `data:image/jpeg;base64,${frameBase64}`
+      if (canvasRef.current) drawFrame(canvasRef.current, frameBase64)
     },
     onAuthorReady: () => {
       setSessionState("ready")
@@ -311,6 +307,20 @@ export default function TestPage() {
     refetch()
   }
 
+  async function handleViewportChange(width: number, height: number) {
+    await api.patch(`/tests/${testId}`, {
+      viewportWidth: width,
+      viewportHeight: height,
+    })
+    refetch()
+    // Resize the live browser immediately, DevTools-style
+    if (sessionIdRef.current) {
+      await api
+        .post(`/author/${sessionIdRef.current}/viewport`, { width, height })
+        .catch(() => {})
+    }
+  }
+
   const [editOpen, setEditOpen] = useState(false)
 
   async function handleRunTest() {
@@ -437,6 +447,7 @@ export default function TestPage() {
         onSeekAll={() => seek({ label: "Replaying all steps…" })}
         onCloseSession={handleCloseSession}
         onToggleContinueOnFailure={handleToggleContinueOnFailure}
+        onViewportChange={handleViewportChange}
         onOpenReport={() => setReportOpen(true)}
         onRunTest={handleRunTest}
       />
@@ -545,6 +556,8 @@ export default function TestPage() {
           selectedRunStep={selectedRunStep}
           onClearSelectedStep={() => setSelectedStepId(null)}
           runEvents={runEvents ?? null}
+          viewportWidth={test?.viewportWidth}
+          viewportHeight={test?.viewportHeight}
         />
       </div>
 

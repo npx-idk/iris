@@ -3,6 +3,7 @@
 import { useState, useEffect, RefObject } from "react"
 import { createSessionSocket } from "@/lib/socket"
 import { api } from "@/lib/api"
+import { drawFrame } from "@/lib/canvas"
 import { RunStatus, TestRun, TestRunStep } from "@/lib/types"
 
 export function useRunExecution(
@@ -20,12 +21,7 @@ export function useRunExecution(
     if (!activeRunId || !runMode) return
     const socket = createSessionSocket(activeRunId)
     socket.on("frame", ({ frameBase64 }: { frameBase64: string }) => {
-      const canvas = canvasRef.current
-      if (!canvas) return
-      const ctx = canvas.getContext("2d")
-      const img = new Image()
-      img.onload = () => ctx?.drawImage(img, 0, 0, canvas.width, canvas.height)
-      img.src = `data:image/jpeg;base64,${frameBase64}`
+      if (canvasRef.current) drawFrame(canvasRef.current, frameBase64)
     })
     socket.on("event", (e: any) => {
       if (e.type === "run.started") setRunStatus("RUNNING")

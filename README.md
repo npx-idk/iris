@@ -1,3 +1,10 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/logo-dark.svg">
+    <img src="assets/logo-light.svg" width="80" alt="Iris logo">
+  </picture>
+</p>
+
 # Iris
 
 AI-powered browser test platform. Write plain-English test steps, Iris executes them in a real browser using Stagehand + Gemini, streams screenshots live, and integrates with CI/CD via a CLI and API keys.

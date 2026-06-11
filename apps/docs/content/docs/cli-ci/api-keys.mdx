@@ -1,0 +1,32 @@
+---
+title: API keys
+description: Project-scoped keys that authenticate the CLI and CI integrations.
+---
+
+API keys authenticate non-interactive callers — the CLI and anything else hitting the CI endpoints. Keys are scoped to a single project.
+
+## Creating a key
+
+1. Open the project's **settings** page (you need the project **owner** or **admin** role).
+2. Create a key with a descriptive name (e.g. `github-actions`), a role, and an optional expiry date.
+3. Copy the raw key — it starts with `iris_` and is **shown exactly once**. Iris stores only a hash; the key can never be retrieved again.
+
+Store it in your CI provider's secret store (e.g. a GitHub Actions secret named `IRIS_KEY`).
+
+## Roles
+
+| Role    | Intended use                                  |
+| ------- | --------------------------------------------- |
+| `CI`    | Trigger runs and poll their status — what pipelines need |
+| `ADMIN` | Elevated programmatic access to the project   |
+
+Use `CI` for pipelines; grant `ADMIN` only where strictly necessary.
+
+## Managing keys
+
+The settings page lists each key's name, prefix, role, last-used time, and expiry. Revoking a key deletes it immediately — callers using it start receiving authentication errors on their next request.
+
+<Callout type="warn">
+  Treat keys like passwords: one key per integration, set expiry dates where
+  you can, and revoke keys you no longer use.
+</Callout>

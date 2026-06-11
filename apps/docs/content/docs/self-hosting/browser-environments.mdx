@@ -1,0 +1,35 @@
+---
+title: Browser environments
+description: Choose where test browsers run — local Playwright or Browserbase cloud.
+---
+
+Every test run and authoring session needs a browser. `BROWSER_ENV` in `apps/api/.env` selects where it comes from.
+
+## `BROWSER_ENV=LOCAL` (default)
+
+Browsers run via Playwright on the same machine as the API.
+
+- **Pros** — zero extra cost, no external dependency, lowest latency.
+- **Cons** — the API host needs Playwright browsers installed and enough CPU/RAM for concurrent sessions; headless browser load scales with your test volume.
+
+Good for local development and small self-hosted deployments.
+
+## `BROWSER_ENV=BROWSERBASE`
+
+Browsers run in [Browserbase](https://browserbase.com)'s cloud; the API connects to remote sessions.
+
+```bash title="apps/api/.env"
+BROWSER_ENV=BROWSERBASE
+BROWSERBASE_API_KEY=bb_...
+BROWSERBASE_PROJECT_ID=...
+```
+
+- **Pros** — no browser infrastructure to manage, scales independently of the API host.
+- **Cons** — requires a Browserbase account and network egress to their service.
+
+Good for production deployments with significant test volume, or when the API runs on hosts where installing browsers is impractical.
+
+<Callout>
+  The choice is invisible to test authors — steps, runs, and live streaming
+  behave the same in both environments.
+</Callout>

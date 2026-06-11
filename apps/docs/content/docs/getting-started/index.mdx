@@ -1,0 +1,74 @@
+---
+title: Quickstart
+description: Get Iris running locally in five steps.
+---
+
+## Prerequisites
+
+- Node.js ≥ 20
+- pnpm 9
+- Docker
+- A [Gemini API key](https://aistudio.google.com/app/apikey) (free tier works)
+
+## 1. Clone and install
+
+```bash
+git clone https://github.com/npx-idk/iris.git
+cd iris
+pnpm install
+```
+
+## 2. Set up environment variables
+
+Copy the example files — each one documents where to get every value:
+
+```bash
+cp apps/api/.env.example apps/api/.env
+cp apps/web/.env.example apps/web/.env.local
+cp packages/database/.env.example packages/database/.env
+```
+
+At minimum, set:
+
+- `GEMINI_API_KEY` — from [Google AI Studio](https://aistudio.google.com/app/apikey)
+- `BETTER_AUTH_SECRET` — generate with `openssl rand -hex 32`
+
+<Callout type="warn">
+  `BETTER_AUTH_SECRET` must be identical in `apps/api/.env` and
+  `apps/web/.env.local` — it signs session tokens.
+</Callout>
+
+## 3. Start infrastructure
+
+```bash
+pnpm docker:up
+```
+
+This starts PostgreSQL, Redis, and MinIO via Docker Compose:
+
+| Service       | URL                     |
+| ------------- | ----------------------- |
+| PostgreSQL    | `localhost:5432`        |
+| Redis         | `localhost:6379`        |
+| MinIO API     | `http://localhost:9000` |
+| MinIO Console | `http://localhost:9001` |
+
+## 4. Run database migrations
+
+```bash
+pnpm db:generate
+pnpm db:migrate
+```
+
+## 5. Start the dev servers
+
+```bash
+pnpm dev
+```
+
+| Service | URL                   |
+| ------- | --------------------- |
+| Web     | http://localhost:3001 |
+| API     | http://localhost:3000 |
+
+Open http://localhost:3001, create an account, and you're ready to [write your first test](/docs/getting-started/first-test).

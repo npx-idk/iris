@@ -1,0 +1,41 @@
+---
+title: Self-hosting overview
+description: Run Iris on your own infrastructure with Docker Compose.
+---
+
+Iris is MIT-licensed and designed to run on standard infrastructure. A deployment consists of two application processes and three backing services.
+
+## Architecture
+
+| Component  | What it is                                                | Default port |
+| ---------- | --------------------------------------------------------- | ------------ |
+| API        | NestJS — REST API, WebSocket gateway, Bull job processor  | `3000`       |
+| Web        | Next.js — dashboard, test authoring UI, run viewer        | `3001`       |
+| PostgreSQL | Primary datastore (users, projects, tests, runs)          | `5432`       |
+| Redis      | Bull job queue for test runs                              | `6379`       |
+| MinIO      | S3-compatible storage for screenshots and frame artifacts | `9000`/`9001` |
+
+The repository ships a `docker-compose.yml` that runs the three backing services:
+
+```bash
+pnpm docker:up    # docker compose up -d
+pnpm docker:down  # stop and remove containers
+```
+
+PostgreSQL runs `postgres:17-alpine` (user/password/db all default to `iris`), Redis runs `redis:7-alpine` with append-only persistence, and MinIO uses `minioadmin`/`minioadmin` root credentials with a console on port `9001`. All three persist data in named Docker volumes.
+
+<Callout type="warn">
+  The compose defaults (database password `iris`, MinIO `minioadmin`) are for
+  local development. Change them for any deployment reachable from a network,
+  and update `DATABASE_URL` and the `MINIO_*` variables to match.
+</Callout>
+
+## Production checklist
+
+1. **Set strong secrets** — `BETTER_AUTH_SECRET` (`openssl rand -hex 32`, identical in API and web), database password, MinIO credentials.
+2. **Configure URLs** — `WEB_URL` and `BETTER_AUTH_URL` on the API must point at the public web URL; `NEXT_PUBLIC_API_URL` on the web app must point at the public API URL.
+3. **Choose a browser environment** — local Playwright needs browsers installed on the API host; [Browserbase](/docs/self-hosting/browser-environments) offloads browser execution to the cloud.
+4. **Run migrations** on deploy: `pnpm db:generate && pnpm db:migrate`.
+5. **Expose MinIO** — `MINIO_PUBLIC_URL` must be reachable by browsers loading run screenshots.
+
+The full list of configuration options is in the [environment variable reference](/docs/self-hosting/environment-variables).

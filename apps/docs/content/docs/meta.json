@@ -1,0 +1,12 @@
+{
+  "pages": [
+    "index",
+    "getting-started",
+    "self-hosting",
+    "writing-tests",
+    "cli-ci",
+    "flows",
+    "api-reference",
+    "architecture"
+  ]
+}

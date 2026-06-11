@@ -44,7 +44,7 @@ export function EditTestSheet({
   onSaved,
 }: EditTestSheetProps) {
   const form = useForm<EditValues>({
-    resolver: zodResolver(editSchema),
+    resolver: zodResolver(editSchema as never),
     mode: "onBlur",
   })
 

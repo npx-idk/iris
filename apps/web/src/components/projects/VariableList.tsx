@@ -56,7 +56,7 @@ function EditVariableRow({
     control,
     formState: { errors },
   } = useForm<EditValues>({
-    resolver: zodResolver(editSchema),
+    resolver: zodResolver(editSchema as never),
     mode: "onBlur",
     defaultValues: {
       name: variable.name,
@@ -160,7 +160,7 @@ export function VariableList({ variables, onUpdate }: Props) {
     setError,
     formState: { errors, isSubmitting },
   } = useForm<CreateValues>({
-    resolver: zodResolver(createSchema),
+    resolver: zodResolver(createSchema as never),
     mode: "onBlur",
     defaultValues: { name: "", value: "", isSecret: false },
   })

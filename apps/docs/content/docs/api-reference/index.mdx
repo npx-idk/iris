@@ -1,0 +1,21 @@
+---
+title: API reference
+description: REST endpoints for projects, tests, runs, and CI integrations.
+---
+
+Iris exposes a JSON REST API (NestJS, default port `3000`). Authentication is either a browser session (better-auth cookies) or an `iris_...` [API key](/docs/cli-ci/api-keys) for the CI endpoints.
+
+The endpoints most useful from the outside are the CI ones the CLI itself uses:
+
+| Method | Path                            | Auth    | Purpose                                  |
+| ------ | ------------------------------- | ------- | ---------------------------------------- |
+| `POST` | `/ci/projects/:projectId/runs`  | API key | Queue runs for all enabled tests         |
+| `POST` | `/ci/tests/:testId/runs`        | API key | Queue a run for a single test            |
+| `GET`  | `/ci/runs/:id`                  | API key | Poll a run's status and step results     |
+
+<Callout title="Documentation in progress">
+  A complete endpoint reference (projects, tests, runs, workspace, authoring
+  sessions, streaming) is planned. Until then, the NestJS controllers in
+  [`apps/api/src`](https://github.com/npx-idk/iris/tree/main/apps/api/src) are
+  the source of truth.
+</Callout>

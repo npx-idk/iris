@@ -84,7 +84,7 @@ export function IdleRunLogs({
                     )
                   })}
                 </div>
-                <div className="h-64">
+                <div className="flex h-64 flex-col">
                   {tab !== "application" && tab === "network" && (
                     <NetworkPanel
                       entries={runEvents.network.map((e) => ({

@@ -15,6 +15,7 @@ import { WorkspaceModule } from "./workspace/workspace.module"
 import { ExploreModule } from "./explore/explore.module"
 import { FoldersModule } from "./folders/folders.module"
 import { FlowsModule } from "./flows/flows.module"
+import { ReportsModule } from "./reports/reports.module"
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { FlowsModule } from "./flows/flows.module"
     ExploreModule,
     FoldersModule,
     FlowsModule,
+    ReportsModule,
   ],
 })
 export class AppModule {}

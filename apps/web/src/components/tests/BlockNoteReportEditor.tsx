@@ -180,18 +180,21 @@ const CustomSideMenu = (props: any) => (
 export function BlockNoteReportEditor({
   editor,
   resolvedTheme,
+  editable = true,
 }: {
   editor: ReturnType<typeof useCreateBlockNote>
   resolvedTheme: string | undefined
+  editable?: boolean
 }) {
   return (
     <BlockNoteView
       editor={editor}
+      editable={editable}
       theme={resolvedTheme === "dark" ? "dark" : "light"}
       shadCNComponents={blockNoteShadcnComponents as any}
       sideMenu={false}
     >
-      <SideMenuController sideMenu={CustomSideMenu} />
+      {editable && <SideMenuController sideMenu={CustomSideMenu} />}
     </BlockNoteView>
   )
 }

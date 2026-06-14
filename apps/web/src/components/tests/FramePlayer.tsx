@@ -7,7 +7,10 @@ import { PlayIcon, PauseIcon, Refresh01Icon } from "@hugeicons/core-free-icons"
 import { Button } from "@iris/ui/components/animate-ui/components/buttons/button"
 
 interface FramePlayerProps {
-  runId: string
+  /** Run to fetch frames for; not needed when `frames` is supplied. */
+  runId?: string
+  /** Preloaded frame URLs (e.g. from the public share endpoint); skips the internal fetch. */
+  frames?: string[]
   className?: string
   viewportWidth?: number
   viewportHeight?: number
@@ -17,14 +20,16 @@ const FPS = 4
 
 export function FramePlayer({
   runId,
+  frames: framesProp,
   className,
   viewportWidth,
   viewportHeight,
 }: FramePlayerProps) {
-  const [frames, setFrames] = useState<string[]>([])
+  const [fetchedFrames, setFetchedFrames] = useState<string[]>([])
   const [current, setCurrent] = useState(0)
   const [playing, setPlaying] = useState(false)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(framesProp == null)
+  const frames = framesProp ?? fetchedFrames
   // Frame aspect ratio (w/h) shapes the mock browser window so phone
   // recordings get a phone-sized window. Seeded from the test's viewport,
   // refined from the actual frame dimensions once one loads (old recordings
@@ -44,17 +49,19 @@ export function FramePlayer({
     }
   }
 
+  const hasFramesProp = framesProp != null
   useEffect(() => {
+    if (hasFramesProp || !runId) return
     setLoading(true)
     api
       .get<string[]>(`/runs/${runId}/frames`)
       .then((f) => {
-        setFrames(f)
+        setFetchedFrames(f)
         setCurrent(0)
         setPlaying(false)
       })
       .finally(() => setLoading(false))
-  }, [runId])
+  }, [runId, hasFramesProp])
 
   useEffect(() => {
     if (intervalRef.current) clearInterval(intervalRef.current)

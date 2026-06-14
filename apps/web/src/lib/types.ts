@@ -83,6 +83,70 @@ export interface TestRun extends TestRunSummary {
   test?: { id: string; name: string; projectId: string }
 }
 
+export interface SharedReport {
+  token: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface PublicReport {
+  title: string
+  createdAt: string
+  updatedAt: string
+  run: PublicRun | null
+}
+
+export interface PublicRun {
+  status: RunStatus
+  trigger: string
+  startedAt?: string
+  finishedAt?: string
+  errorMessage?: string
+  totalSteps: number
+  passedSteps: number
+  totalTokens?: number
+  inferenceTimeMs?: number
+  cacheHits?: number
+  browserEnv?: string
+  createdAt: string
+  stepResults: PublicRunStep[]
+  test: {
+    name: string
+    description?: string
+    startUrl?: string
+    viewportWidth: number
+    viewportHeight: number
+  }
+}
+
+export interface PublicRunStep {
+  id: string
+  stepIndex: number
+  instruction: string
+  description?: string
+  result: StepResult
+  cacheStatus?: CacheStatus
+  errorMessage?: string
+  durationMs: number
+  screenshotUrl?: string
+  createdAt: string
+}
+
+export interface PublicNetworkEntry {
+  id: string
+  timestamp: number
+  method: string
+  url: string
+  status?: number
+  mimeType?: string
+  duration?: number
+}
+
+export interface PublicRunEvents {
+  network: PublicNetworkEntry[]
+  console: StoredConsoleEntry[]
+}
+
 export interface StoredNetworkEntry {
   id: string
   timestamp: number

@@ -334,6 +334,25 @@ model TestRunStep {
   @@map("test_run_steps")
 }
 
+// ─── Shared Reports ───────────────────────────────────────────────────────────
+
+// Published snapshot of a run's report (BlockNote blocks JSON), viewable by
+// anyone holding the token. Intentionally has no FK to TestRun/User so the
+// published page survives run or account deletion.
+model SharedReport {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  title     String
+  content   Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  runId  String @unique
+  userId String
+
+  @@map("shared_reports")
+}
+
 model Flow {
   id        String   @id @default(cuid())
   name      String

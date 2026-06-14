@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { Fragment, useState } from "react"
 import { ChevronIcon } from "@/components/shared/ChevronIcon"
 
 export interface NetworkEntry {
@@ -18,7 +18,7 @@ export interface NetworkEntry {
   pending: boolean
 }
 
-function methodColor(method: string) {
+export function methodColor(method: string) {
   const m = method.toUpperCase()
   if (m === "GET") return "text-primary"
   if (m === "POST") return "text-primary"
@@ -27,7 +27,7 @@ function methodColor(method: string) {
   return "text-muted-foreground"
 }
 
-function statusColor(status?: number) {
+export function statusColor(status?: number) {
   if (!status) return "text-muted-foreground"
   if (status < 300) return "text-primary"
   if (status < 400) return "text-muted-foreground"
@@ -43,7 +43,7 @@ function prettyBody(body?: string): string {
   }
 }
 
-function urlPath(url: string): string {
+export function urlPath(url: string): string {
   try {
     const u = new URL(url)
     return u.pathname + u.search
@@ -59,14 +59,10 @@ function HeadersTable({ headers }: { headers: Record<string, string> }) {
   return (
     <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-x-4 gap-y-0.5">
       {entries.map(([k, v]) => (
-        <>
-          <span key={k} className="truncate text-muted-foreground">
-            {k}
-          </span>
-          <span key={k + "v"} className="truncate">
-            {v}
-          </span>
-        </>
+        <Fragment key={k}>
+          <span className="truncate text-muted-foreground">{k}</span>
+          <span className="truncate">{v}</span>
+        </Fragment>
       ))}
     </div>
   )
